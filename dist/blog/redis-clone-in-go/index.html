@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html class="theme-bubblegum astro-SL6KQ3V5" lang="en">
+  <head>
+    <!-- Global Metadata -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="generator" content="Blogster">
+    <meta name="theme-color" content="#ffffff">
+<!-- 
+  This is an example. 
+  Use https://realfavicongenerator.net to generate the icons and manifest. 
+-->
+<link href="/favicon.ico" rel="shortcut icon">
+
+    <!-- Primary Meta Tags --><title>Making A Redis Clone For Learning Go - Part 1</title>
+<meta name="title" content="Making A Redis Clone For Learning Go - Part 1">
+<meta name="description" content="This includes my process of building redis clone to learn Go">
+
+
+<!-- Open Graph / Facebook -->
+<meta property="og:title" content="Making A Redis Clone For Learning Go - Part 1">
+<meta property="og:description" content="This includes my process of building redis clone to learn Go">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://manu156.github.io/blog/redis-clone-in-go">
+<meta property="article:author" content="Captain Awesome">
+<meta property="article:published_time" content="2023-07-15T00:00:00.000Z">
+
+
+
+
+
+<!-- Twitter -->
+<meta property="twitter:title" content="Making A Redis Clone For Learning Go - Part 1">
+<meta property="twitter:description" content="This includes my process of building redis clone to learn Go">
+<meta property="twitter:site" content="@yourtwitterhandle">
+<meta property="twitter:creator" content="@yourtwitterhandle">
+<meta property="twitter:card" content="summary_large_image">
+
+
+<!-- {twitter.url && <meta property="twitter:url" content={twitter.url} />} -->
+
+    <!-- 
+    We don't want to use <link /> to load fonts from Google CDN 
+    but if you want to switch font this is the easiest way 
+    to check how your page will look with the new font.
+--><!-- 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&display=block"
+        rel="stylesheet"
+    />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;0,800;1,400&display=swap"
+        rel="stylesheet"
+    />
+--><link rel="preload" href="/fonts/space-grotesk-v13-latin-regular.woff2" as="font" type="font/woff2" crossorigin="crossorigin"><link rel="preload" href="/fonts/space-grotesk-v13-latin-700.woff2" as="font" type="font/woff2" crossorigin="crossorigin"><style>
+    /* space-grotesk-regular - latin */
+    @font-face {
+      font-family: "Space Grotesk";
+      font-style: normal;
+      font-weight: 400;
+      src: local(""),
+        url("/fonts/space-grotesk-v13-latin-regular.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */
+          url("/fonts/space-grotesk-v13-latin-regular.woff") format("woff"); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+    }
+    /* space-grotesk-700 - latin */
+    @font-face {
+      font-family: "Space Grotesk";
+      font-style: normal;
+      font-weight: 700;
+      src: local(""),
+        url("/fonts/space-grotesk-v13-latin-700.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */
+          url("/fonts/space-grotesk-v13-latin-700.woff") format("woff"); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+    }
+  </style>
+
+    <script>
+  // figure out user's preferred theme and set it as html class for tailwind before paint
+  (function () {
+    if (typeof window !== "undefined") {
+      const isSystemColorSchemeDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      const storageTheme = sessionStorage.getItem("theme");
+      if (!storageTheme && isSystemColorSchemeDark) {
+        document.documentElement.classList.add("dark");
+        document.head.children.namedItem("theme-color").content = "#0f172a";
+      } else if (storageTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.head.children.namedItem("theme-color").content = "#0f172a";
+      } else {
+        // we already server render light theme
+        document.head.children.namedItem("theme-color").content = "#ffffff";
+      }
+    }
+  })();
+</script>
+
+    <link href="/fontawesome/css/fontawesome.bareminimum.css" rel="stylesheet"><link href="/fontawesome/css/brands.bareminimum.css" rel="stylesheet"><link href="/fontawesome/css/solid.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="/assets/_slug_.0d3f7b11.css" />
+<link rel="stylesheet" href="/assets/_slug_.866f0a08.css" /><script type="module" src="/hoisted.f0831ec5.js"></script></head>
+
+  <body class="max-w-3xl mx-auto min-h-screen px-6 sm:px-8 astro-SL6KQ3V5">
+    <header class=" astro-A5Y7HLVH">
+  <a class="unset absolute z-10 left-[50%] -top-[100rem] translate-x-[-50%] bg-white text-black px-8 py-2 focus:top-[initial] astro-A5Y7HLVH" href="#main">
+    Skip to content
+  </a>
+  <nav class="hidden md:inline astro-CL4CICHU">
+    <section class="text-text-bold astro-CL4CICHU">
+      <ul class="unset flex gap-4 [&>li]:p-0 astro-CL4CICHU">
+        <li class="astro-CL4CICHU"><!-- DO NOT FORMAT. IT ADDS AN EXTRA SPACE ON RENDERED CONTENT. --><a href="/" class="astro-CL4CICHU unset animated-link">Home</a></li>
+        <li class="astro-CL4CICHU"><!-- DO NOT FORMAT. IT ADDS AN EXTRA SPACE ON RENDERED CONTENT. --><a href="/blog" class="astro-CL4CICHU show unset animated-link">Blog</a></li>
+        <li class="astro-CL4CICHU"><!-- DO NOT FORMAT. IT ADDS AN EXTRA SPACE ON RENDERED CONTENT. --><a href="/projects" class="astro-CL4CICHU unset animated-link">Projects</a></li>
+      </ul>
+    </section>
+  </nav><nav class="md:hidden astro-CL4CICHU">
+    <button id="mobile-menu-open" class="astro-CL4CICHU">
+      <i class="fa-solid fa-bars astro-CL4CICHU" aria-hidden="true" title="Open mobile menu"></i>
+      <span class="fa-sr-only astro-CL4CICHU">Open mobile menu</span>
+    </button>
+    <section id="mobile-menu" class="hide-menu fixed top-0 left-0 z-10 w-full h-full transition-transform bg-black/75 border-primary-blue astro-CL4CICHU">
+      <div class="bg-bg-body w-[75%] h-full drop-shadow-2xl astro-CL4CICHU">
+        <button id="mobile-menu-close" class="px-6 h-[5rem] text-lg xml-[1px] astro-CL4CICHU">
+          <i class="fa-solid fa-xmark astro-CL4CICHU" aria-hidden="true" title="Close mobile menu"></i>
+          <span class="fa-sr-only astro-CL4CICHU">Close mobile menu</span>
+        </button>
+        <ul class="unset flex flex-col text-text-bold gap-4 [&>li]:p-0 px-6 astro-CL4CICHU">
+          <li class="astro-CL4CICHU"><!-- DO NOT FORMAT. IT ADDS AN EXTRA SPACE ON RENDERED CONTENT. --><a href="/" class="astro-CL4CICHU unset animated-link">Home</a></li>
+          <li class="astro-CL4CICHU"><!-- DO NOT FORMAT. IT ADDS AN EXTRA SPACE ON RENDERED CONTENT. --><a href="/blog" class="astro-CL4CICHU show unset animated-link">Blog</a></li>
+          <li class="astro-CL4CICHU"><!-- DO NOT FORMAT. IT ADDS AN EXTRA SPACE ON RENDERED CONTENT. --><a href="/projects" class="astro-CL4CICHU unset animated-link">Projects</a></li>
+        </ul>
+      </div>
+    </section>
+  </nav>
+
+
+
+
+
+  <div class="justify-self-end py-2 flex items-center content-center text-text-bold astro-A5Y7HLVH">
+    <a class="unset ml-4 rounded-sm transition-[background-size] duration-150 ease-in-out bg-left-bottom bg-[length:0%_55%] hover:bg-[length:100%_55%] bg-no-repeat bg-gradient-to-r from-primary-yellow to-primary-yellow dark:bg-none dark:hover:text-primary-yellow astro-A5Y7HLVH" href="https://github.com/flexdinesh/blogster">
+      <i class="fa-brands fa-github astro-A5Y7HLVH" aria-hidden="true" title="Blogster on GitHub"></i>
+      <span class="astro-A5Y7HLVH">GitHub</span>
+    </a>
+    <a class="unset ml-4 rounded-sm transition-[background-size] duration-150 bg-left-bottom bg-[length:0%_55%] hover:bg-[length:100%_55%] bg-no-repeat bg-gradient-to-r from-primary-blue to-primary-blue dark:bg-none dark:hover:text-primary-blue astro-A5Y7HLVH" href="https://twitter.com/flexdinesh">
+      <i class="fa-brands fa-twitter astro-A5Y7HLVH" aria-hidden="true" title="Dinesh on Twitter"></i>
+      <span class="astro-A5Y7HLVH">Twitter</span>
+    </a>
+  </div>
+  <mode-toggle class="flex astro-G5E24WEF">
+  <button class="justify-self-end bg-black dark:bg-white ml-4 inline-flex h-6 w-11 items-center rounded-full astro-G5E24WEF" id="mode-toggle" role="switch" type="button" tabindex="0" aria-checked="false" data-headlessui-state=""><span class="sr-only astro-G5E24WEF">Toggle dark mode</span><span id="mode-circle" class="light inline-block h-4 w-4 rounded-full bg-gradient-to-tr invisible astro-G5E24WEF"><span class="absolute top-0 right-0 w-[10px] h-[10px] rounded-full bg-gray-700 scale-[0] astro-G5E24WEF"></span>
+    </span>
+  </button>
+</mode-toggle>
+
+
+
+
+</header>
+
+    <main id="main" class="astro-SL6KQ3V5">
+      <section class="blog-post prose max-w-none prose-bubblegum astro-SL6KQ3V5">
+        <h1 class="m-0 mb-[0.25em] astro-SL6KQ3V5">
+          <span class="
+              pl-6 relative block leading-[150%]
+              after:absolute after:content-[''] after:w-2 after:h-full after:top-0 after:left-0 after:bg-primary-green
+             astro-SL6KQ3V5">
+            Making A Redis Clone For Learning Go - Part 1
+          </span>
+        </h1>
+        <time class="block mb-[2em] text-text-muted astro-SL6KQ3V5">Jul 15, 2023</time>
+        <article><p>Learning a programming language while doing a project would be much easier than simply learning the syntax or taking long courses and making notes. So this is my attempt at learning Go while creating a redis clone.</p><p><em>Note:</em> I'll ignore error handling in most of the cases while including code here(even if go compiler doesn't like it), however the full code with better error handling is in my repo: <a href="https://github.com/manu156/redisClone">manu156/redisClone</a></p><h2 id="zeroth-step" class="group flex"><span class="
+      pl-6 relative block leading-[150%]
+      before:absolute before:content-[''] before:w-2 before:h-full before:top-0 before:left-0 before:bg-primary-green
+    ">
+      Zeroth Step
+    </span></h2><p>First things first. I need to have some documentation about redis and some method to test my clone.<br/>Going through redis documentation, it seems that there is enough material for initial coding. And for initial testing I will use some redis-client(probably redis-cli becacuse it's easy) to execute the commands and check, later automated tests/scripts can be added. So the plan for now is to implement a serever which will accept a single command, execute it and will return appropriate response.</p><h2 id="first-step" class="group flex"><span class="
+      pl-6 relative block leading-[150%]
+      before:absolute before:content-[''] before:w-2 before:h-full before:top-0 before:left-0 before:bg-primary-green
+    ">
+      First Step
+    </span></h2><p>From the documentation:</p><blockquote><p>The first thing to do in order to check if Redis is working properly is sending a PING command using redis-cli</p></blockquote><pre class="language-sh"><code class="language-sh">$ redis-cli <span class="token function">ping</span>
+PONG
+</code></pre>
+
+<p>We got our first goal, to implement &quot;ping&quot;. We also need to get redis-cli client without redis: (Download latest redis and unzip it)</p><pre class="language-sh"><code class="language-sh"><span class="token function">wget</span> http://download.redis.io/redis-stable.tar.gz
+<span class="token function">tar</span> xvzf redis-stable.tar.gz
+</code></pre>
+
+<p>Build redis-cli</p><pre class="language-sh"><code class="language-sh"><span class="token function">make</span> redis-cli
+</code></pre>
+
+<p>Then copy the binaries(<code>src/redis-cli</code>) to <code>/usr/local/bin</code></p><h2 id="implementation-of-first-step" class="group flex"><span class="
+      pl-6 relative block leading-[150%]
+      before:absolute before:content-[''] before:w-2 before:h-full before:top-0 before:left-0 before:bg-primary-green
+    ">
+      Implementation of First Step
+    </span></h2><p>First I'll we need to open a port on 6379 (redis default port). And we can handle each connection in a thread.</p><pre class="language-go"><code class="language-go">l<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">Listen</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> <span class="token string">"0.0.0.0:6379"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> <span class="token punctuation">{</span>
+    conn<span class="token punctuation">,</span> err <span class="token operator">:=</span> l<span class="token punctuation">.</span><span class="token function">Accept</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token boolean">nil</span> <span class="token operator">!=</span> err <span class="token punctuation">{</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"failed while accepting connection. "</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">go</span> <span class="token function">handleConnection</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<p>For now, we dont know the format or payload so I'll just print the contents as it is</p><pre class="language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">handleConnection</span><span class="token punctuation">(</span>conn net<span class="token punctuation">.</span>Conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    b <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span><span class="token punctuation">,</span> <span class="token number">1024</span><span class="token punctuation">)</span>
+	
+    size<span class="token punctuation">,</span> err <span class="token operator">:=</span> conn<span class="token punctuation">.</span><span class="token function">Read</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token boolean">nil</span> <span class="token operator">!=</span> err <span class="token punctuation">{</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"error while reading from connection."</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"got:"</span><span class="token punctuation">,</span> <span class="token function">string</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<p>Let's try running ping on redis-cli. Looks like redis-cli is starting but we got the following output from our server:</p><pre class="language-RESP"><code class="language-RESP">*2
+$7
+COMMAND
+$4
+DOCS
+</code></pre>
+
+<p>Seems like the data is in some format. Going through redis documentation <a href="https://redis.io/docs/reference/protocol-spec/">redis docs</a>, we can see that this is RESP protocol.</p><p>Summary of the doc required for us ('cuz nobody likes to read documentation):</p><ul><li>Different parts of the protocol are always terminated with &quot;\r\n&quot; (CRLF).</li><li>In RESP, the first byte determines the data type:<ul><li>For Integers, the first byte of the reply is &quot;:&quot;</li><li>For Bulk Strings, the first byte of the reply is &quot;$&quot;</li><li>For Arrays, the first byte of the reply is &quot;*&quot;</li></ul></li><li>First byte is followed by number of bytes and CRLF</li></ul><p>So now we can interpret the request something like [COMMAND, DOCS]. Probably client is requesting some information regarding documentation or commands, let's ignore this and try to respond for &quot;PING&quot; only. Our request for ping could be something like [PING], so we need to respond with &quot;+PONG\r\n&quot; in this case. &quot;+&quot; indicates the response is a simple string. Some hacky solution:</p><pre class="language-go"><code class="language-go"><span class="token keyword">if</span> strings<span class="token punctuation">.</span><span class="token function">Contains</span><span class="token punctuation">(</span>strings<span class="token punctuation">.</span><span class="token function">ToLower</span><span class="token punctuation">(</span><span class="token function">string</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"ping"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token boolean">_</span><span class="token punctuation">,</span> err <span class="token operator">=</span> conn<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">"+PONG\r\n"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token boolean">nil</span> <span class="token operator">!=</span> err <span class="token punctuation">{</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"error while pinging."</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<p>Running redis-cli:</p><pre class="language-sh"><code class="language-sh">❯ redis-cli
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> <span class="token function">ping</span>
+PONG
+</code></pre>
+
+<p>🥳 cool It's working as expected</p><p>Next Steps in part 2</p></article>
+      </section>
+    </main>
+    <footer class="text-sm leading-[1.75] mt-4 astro-T5OQSARV">
+  <div class="astro-T5OQSARV">
+    This blog is built with 
+    <a class="unset gradient-link tracking-wider font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#f57111] to-[#f79605] hover:after:bg-gradient-to-r hover:after:from-[#f57111] hover:after:to-[#f79605] astro-T5OQSARV" href="https://github.com/flexdinesh/blogster" target="_blank">
+      Blogster</a>
+  </div>
+</footer>
+
+
+    
+  </body>
+</html>
