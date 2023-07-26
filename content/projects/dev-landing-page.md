@@ -1,6 +1,6 @@
 ---
-title: A minimal landing page for developers
-description: A minimal landing page for developers.
-date: 2018-04-06
-url: https://github.com/flexdinesh/dev-landing-page
+title: JPQL To SQL IntelliJ Plugin
+description: This plugin analyzes JPA (Java Persistence Query Language) queries and converts them automatically to equivalent SQL.
+date: 2023-04-06
+url: https://github.com/manu156/jpqltosql
 ---
