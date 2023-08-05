@@ -174,12 +174,46 @@
           </span>
         </h1>
         <time class="block mb-[2em] text-text-muted astro-SL6KQ3V5">Jul 20, 2023</time>
-        <article><p>Learning a programming language while doing a project would be much easier than simply learning the syntax or taking long courses and making notes. So this is my attempt at learning Go while creating a redis clone.</p><p><em>Note:</em> I'll ignore error handling in most of the cases while including code here(even if go compiler doesn't like it), however the full code with better error handling is in my repo: <a href="https://github.com/manu156/redisClone">manu156/redisClone</a></p><p>Link to previous part: <a href="https://manu156.github.io/blog/redis-clone-in-go/">Part 1</a></p><h2 id="coming-soon" class="group flex"><span class="
+        <article><p>Learning a programming language while doing a project would be much easier than simply learning the syntax or taking long courses and making notes. So this is my attempt at learning Go while creating a redis clone.</p><p><em>Note:</em> I'll ignore error handling in most of the cases while including code here(even if go compiler doesn't like it), however the full code with better error handling is in my repo: <a href="https://github.com/manu156/redisClone">manu156/redisClone</a></p><p>Link to previous part: <a href="https://manu156.github.io/blog/redis-clone-in-go/">Part 1</a></p><h2 id="parsing-commands" class="group flex"><span class="
       pl-6 relative block leading-[150%]
       before:absolute before:content-[''] before:w-2 before:h-full before:top-0 before:left-0 before:bg-primary-green
     ">
-      Coming Soon
-    </span></h2></article>
+      Parsing Commands
+    </span></h2><p>In the last part, we implemented some hackish way of parsing command &quot;ping&quot;. Let's make it right. My first attempt was to use Scanner from bufio something like this (code inspired from the functions in bufio):</p><pre class="language-go"><code class="language-go">scanner <span class="token operator">:=</span> bufio<span class="token punctuation">.</span><span class="token function">NewScanner</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span>
+splitter <span class="token operator">:=</span> <span class="token keyword">func</span><span class="token punctuation">(</span>data <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span><span class="token punctuation">,</span> atEOF <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>advance <span class="token builtin">int</span><span class="token punctuation">,</span> token <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span><span class="token punctuation">,</span> err <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    start <span class="token operator">:=</span> <span class="token number">0</span>
+    <span class="token comment">// Scan until space, marking end of word.</span>
+    <span class="token keyword">for</span> width<span class="token punctuation">,</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">,</span> start<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span> i <span class="token operator">+=</span> width <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> r <span class="token builtin">rune</span>
+        r<span class="token punctuation">,</span> width <span class="token operator">=</span> utf8<span class="token punctuation">.</span><span class="token function">DecodeRune</span><span class="token punctuation">(</span>data<span class="token punctuation">[</span>i<span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token char">'\r'</span> <span class="token operator">==</span> r <span class="token punctuation">{</span>
+            rn<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> utf8<span class="token punctuation">.</span><span class="token function">DecodeRune</span><span class="token punctuation">(</span>data<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> <span class="token char">'\n'</span> <span class="token operator">==</span> rn <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> i <span class="token operator">+</span> width<span class="token punctuation">,</span> data<span class="token punctuation">[</span>start<span class="token punctuation">:</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// If we're at EOF, we have a final, non-empty, non-terminated word. Return it.</span>
+    <span class="token keyword">if</span> atEOF <span class="token operator">&amp;&amp;</span> <span class="token function">len</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span> <span class="token operator">></span> start <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">len</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">,</span> data<span class="token punctuation">[</span>start<span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// Request more data.</span>
+    <span class="token keyword">return</span> start<span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">for</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Set the split function for the scanning operation.</span>
+    scanner<span class="token punctuation">.</span><span class="token function">Split</span><span class="token punctuation">(</span>splitter<span class="token punctuation">)</span>
+    <span class="token comment">// Validate the input</span>
+    <span class="token keyword">for</span> scanner<span class="token punctuation">.</span><span class="token function">Scan</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// first scan would be size of array. and next scans will scan command and it's arguments</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"%s\n"</span><span class="token punctuation">,</span> scanner<span class="token punctuation">.</span><span class="token function">Text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// ... more code</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<p>The problem with this is we may not be able to parse large arguments so I thought to use conn.read() directly instead of wrapping it in some interface, it won't be neat though.</p></article>
       </section>
     </main>
     <footer class="text-sm leading-[1.75] mt-4 astro-T5OQSARV">
