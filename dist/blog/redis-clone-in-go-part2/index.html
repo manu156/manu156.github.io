@@ -213,7 +213,99 @@ splitter <span class="token operator">:=</span> <span class="token keyword">func
 <span class="token punctuation">}</span>
 </code></pre>
 
-<p>The problem with this is we may not be able to parse large arguments so I thought to use conn.read() directly instead of wrapping it in some interface, it won't be neat though.</p></article>
+<p>The problem with this is we may not be able to parse large arguments so I thought to use conn.read() directly instead of wrapping it in some interface, it won't be neat though.</p><h1 id="better-code" class="group flex"><span class="
+      pl-6 relative block leading-[150%]
+      before:absolute before:content-[''] before:w-2 before:h-full before:top-0 before:left-0 before:bg-primary-green
+    ">
+      Better Code
+    </span></h1><p>I have added a struct to maintain buffer</p><pre class="language-go"><code class="language-go"><span class="token keyword">type</span> DataBuffer <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	Buffer      <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span>  <span class="token comment">// Data read from client</span>
+	Size        <span class="token builtin">int</span>     <span class="token comment">// Size of data read from client in bytes</span>
+	ReadPointer <span class="token builtin">int</span>     <span class="token comment">// Number of bytes read/processed</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<p>Now my handleConnection is something like this</p><pre class="language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">handleConnection</span><span class="token punctuation">(</span>conn net<span class="token punctuation">.</span>Conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// defer clouser of connection</span>
+	lastProcessed <span class="token operator">:=</span> <span class="token boolean">true</span>
+	dataBuffer <span class="token operator">:=</span> DataBuffer<span class="token punctuation">{</span>Buffer<span class="token punctuation">:</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span><span class="token punctuation">,</span> BufferSize<span class="token punctuation">)</span><span class="token punctuation">}</span>
+	<span class="token keyword">for</span> <span class="token punctuation">{</span>
+		<span class="token keyword">if</span> lastProcessed <span class="token punctuation">{</span>
+			<span class="token comment">// read new data into buffer</span>
+            <span class="token comment">// ... code</span>
+		<span class="token punctuation">}</span>
+
+        <span class="token comment">// parse the command</span>
+		commandArray<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">readCommand</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span> <span class="token operator">&amp;</span>dataBuffer<span class="token punctuation">)</span>
+		<span class="token keyword">if</span> err <span class="token punctuation">{</span>
+			<span class="token keyword">return</span>
+		<span class="token punctuation">}</span>
+
+        <span class="token comment">// proccess and reply to client</span>
+		<span class="token keyword">if</span> <span class="token function">processCommand</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span> commandArray<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword">return</span>
+		<span class="token punctuation">}</span>
+
+		<span class="token keyword">if</span> dataBuffer<span class="token punctuation">.</span>ReadPointer <span class="token operator">&lt;</span> dataBuffer<span class="token punctuation">.</span>Size <span class="token punctuation">{</span>
+            <span class="token comment">// If some data is left in buffer probably another command then process it in next iteration</span>
+			lastProcessed <span class="token operator">=</span> <span class="token boolean">false</span>
+			<span class="token comment">// ... more code</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<p>And for readCommand, I really wanted to use the size provided in front of each datatype in parsing. I tried to read the size of command/argument first then I can read atleast this &quot;size&quot; amount of data to completely obtain next argument. (MaxReadIterations is just for a safety-check so that we never end up in a loop because of some error)</p><pre class="language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">readCommand</span><span class="token punctuation">(</span>conn net<span class="token punctuation">.</span>Conn<span class="token punctuation">,</span> dataBuffer <span class="token operator">*</span>DataBuffer<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// get the size of array</span>
+	arraySize<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">getDataSize</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span> dataBuffer<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">||</span> <span class="token number">0</span> <span class="token operator">==</span> arraySize <span class="token operator">||</span> arraySize <span class="token operator">></span> MaxArgumentSize <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> <span class="token boolean">true</span>
+	<span class="token punctuation">}</span>
+
+	cmdArray <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> arraySize<span class="token punctuation">)</span>
+	<span class="token keyword">for</span> arrayCounter <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> arrayCounter <span class="token operator">&lt;</span> arraySize<span class="token punctuation">;</span> arrayCounter<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token comment">// get the size of argument</span>
+		argSize<span class="token punctuation">,</span> getDataSizeErr <span class="token operator">:=</span> <span class="token function">getDataSize</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span> dataBuffer<span class="token punctuation">)</span>
+		<span class="token keyword">if</span> getDataSizeErr <span class="token operator">||</span> <span class="token number">0</span> <span class="token operator">==</span> argSize <span class="token punctuation">{</span>
+			<span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> <span class="token boolean">true</span>
+		<span class="token punctuation">}</span>
+
+		<span class="token keyword">for</span> iter <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> iter <span class="token operator">&lt;=</span> MaxReadIterations<span class="token punctuation">;</span> iter<span class="token operator">++</span> <span class="token punctuation">{</span>
+            <span class="token comment">// If there is enough data in buffer to competely parse this argument then proceed else read more data</span>
+			<span class="token keyword">if</span> dataBuffer<span class="token punctuation">.</span>Size <span class="token operator">>=</span> dataBuffer<span class="token punctuation">.</span>ReadPointer<span class="token operator">+</span>argSize<span class="token operator">+</span><span class="token number">2</span> <span class="token punctuation">{</span>
+				<span class="token keyword">break</span>
+			<span class="token punctuation">}</span>
+			err <span class="token operator">=</span> <span class="token function">readDataIntoBuffer</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span> dataBuffer<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span>
+			<span class="token keyword">if</span> err <span class="token punctuation">{</span>
+				<span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> <span class="token boolean">true</span>
+			<span class="token punctuation">}</span>
+		<span class="token punctuation">}</span>
+		cmdArray<span class="token punctuation">[</span>arrayCounter<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">(</span>dataBuffer<span class="token punctuation">.</span>Buffer<span class="token punctuation">)</span><span class="token punctuation">[</span>dataBuffer<span class="token punctuation">.</span>ReadPointer <span class="token punctuation">:</span> dataBuffer<span class="token punctuation">.</span>ReadPointer<span class="token operator">+</span>argSize<span class="token punctuation">]</span><span class="token punctuation">)</span>
+		dataBuffer<span class="token punctuation">.</span>ReadPointer <span class="token operator">+=</span> argSize <span class="token operator">+</span> <span class="token number">2</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">return</span> cmdArray<span class="token punctuation">,</span> <span class="token boolean">false</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<p>Remaining is just imperative code stuff. Now we can easily parse our commands something like this</p><pre class="language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">processCommand</span><span class="token punctuation">(</span>conn net<span class="token punctuation">.</span>Conn<span class="token punctuation">,</span> cmdArray <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">{</span>
+	<span class="token keyword">if</span> strings<span class="token punctuation">.</span><span class="token function">ToLower</span><span class="token punctuation">(</span>cmdArray<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">"ping"</span> <span class="token punctuation">{</span>
+		<span class="token boolean">_</span><span class="token punctuation">,</span> err <span class="token operator">:=</span> conn<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">"+PONG\r\n"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+		<span class="token keyword">if</span> <span class="token boolean">nil</span> <span class="token operator">!=</span> err <span class="token punctuation">{</span>
+			fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"error while pinging."</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+			<span class="token keyword">return</span> <span class="token boolean">true</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+		<span class="token boolean">_</span><span class="token punctuation">,</span> err <span class="token operator">:=</span> conn<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">"-1\r\n"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+		<span class="token keyword">if</span> <span class="token boolean">nil</span> <span class="token operator">!=</span> err <span class="token punctuation">{</span>
+			fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"error while pinging."</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+			<span class="token keyword">return</span> <span class="token boolean">true</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">return</span> <span class="token boolean">false</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<p>Finally our code is much better and we can write code for each command (in the next blog ofc 😅).</p></article>
       </section>
     </main>
     <footer class="text-sm leading-[1.75] mt-4 astro-T5OQSARV">

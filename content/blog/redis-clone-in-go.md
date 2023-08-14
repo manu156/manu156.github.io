@@ -98,4 +98,5 @@ PONG
 ```
 &#129395; cool It's working as expected  
 
-Next Steps in part 2
+Next Steps in part 2  
+Link to next part: [Part 2](https://manu156.github.io/blog/redis-clone-in-go-part2/)
