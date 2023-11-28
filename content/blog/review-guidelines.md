@@ -8,6 +8,7 @@ This is my check list that so that I do not miss anything while doing a code rev
 I made this list based on my experience trying to make out patterns out of bugs that I have seen frequently.
 # General Guidlines
 - Don't implement things that you might need in the future but are not required now
+- Changes that are not backward compaitable should be in new version, for example APIs should be moved to next version like /v1 -> /v2
 - Comments are clear and useful, and mostly explain why instead of what
 - Any parallel programming is done safely. Shared fields or Dependency injection can cause data corruption
 - Tests are well-designed. Write tests that test the each path when there are complex pathways
@@ -29,3 +30,6 @@ I made this list based on my experience trying to make out patterns out of bugs 
 - A method should do only one thing and should have correct name
 - It is possible that a method has it's wrong name for example, a method validating user which returns true when user is valid might have return opposite value instead
 - Utility methods may have different behaviour than expected for example a utility method to convert list to set/map might throw an exception when duplicates are encountered or silently replace duplicates in order,.. 
+
+# Misc
+Some good resources: [https://github.com/google/eng-practices/tree/master](google-eng-practices)
