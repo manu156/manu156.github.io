@@ -11,6 +11,8 @@ I made this list based on my experience trying to make out patterns out of bugs 
 - Comments are clear and useful, and mostly explain why instead of what
 - Any parallel programming is done safely. Shared fields or Dependency injection can cause data corruption
 - Tests are well-designed. Write tests that test the each path when there are complex pathways
+- Controller methods should have atleast one unique log
+- Jobs should have logs at start and end of jobs code
 - External system dependencies are properly treated
     - Data Storage Changes
         - Check code interactions with these systems for example in Java/Spring @Table/@Column can be used to identify these changes. These are to be properly documented and they might require thier own work like adding indices/mappings
@@ -26,3 +28,4 @@ I made this list based on my experience trying to make out patterns out of bugs 
 	use clear names for everything. Similar Names for things that represent different things. Confusing names can lead to bugs
 - A method should do only one thing and should have correct name
 - It is possible that a method has it's wrong name for example, a method validating user which returns true when user is valid might have return opposite value instead
+- Utility methods may have different behaviour than expected for example a utility method to convert list to set/map might throw an exception when duplicates are encountered or silently replace duplicates in order,.. 
