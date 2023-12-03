@@ -6,10 +6,14 @@ date: 2020-01-20
 ---
 
 ## My Desktop Setup / Distro
-Arch Linux + Wayland + GNOME
+(Primary) Arch Linux + Wayland + GNOME
+(Secondary) MacOs + KarbinerElements + Maccy + kitty
 
 ## Configs
-Key remapping - [https://github.com/wez/evremap](https://github.com/wez/evremap)
+Key remapping - [https://github.com/wez/evremap](https://github.com/wez/evremap)  
+MacOs rempping
+- [Swap Escape and Caps](https://genesy.github.io/karabiner-complex-rules-generator/#eyJ0aXRsZSI6IlN3YXAgQ2FwcyBhbmQgRXNjYXBlIiwicnVsZXMiOlt7ImRlc2NyaXB0aW9uIjoiY2FwcyAtPiBlc2MiLCJtYW5pcHVsYXRvcnMiOlt7InR5cGUiOiJiYXNpYyIsImZyb20iOnsia2V5X2NvZGUiOiJjYXBzX2xvY2sifSwidG8iOlt7InJlcGVhdCI6ZmFsc2UsImtleV9jb2RlIjoiZXNjYXBlIn1dfV19LHsiZGVzY3JpcHRpb24iOiJlc2MgLT4gY2FwcyIsIm1hbmlwdWxhdG9ycyI6W3sidHlwZSI6ImJhc2ljIiwiZnJvbSI6eyJrZXlfY29kZSI6ImVzY2FwZSJ9LCJ0byI6W3sicmVwZWF0IjpmYWxzZSwia2V5X2NvZGUiOiJjYXBzX2xvY2sifV19XX1dfQ==)
+- 
 
 ## Extensions
 ```sh
