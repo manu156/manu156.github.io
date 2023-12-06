@@ -24,6 +24,10 @@ I made this list based on my experience trying to make out patterns out of bugs 
 	    - Add to monitoring graphs / alerts
     - Message Queue Systems
         - Add logs at both ends to debug problems, it is possible for some messages to be dropped at either producer or broker or consumer.
+- "Premature optimization is the root of all evil"
+- You never know what is the slowest step until the end so do a performance review at the end
+- Avoid touching old code
+- Some steps/processes/method calls that appear unnecessary may actually be necessary and vice versa
 # Common Bug Patterns
 - .get(0) or array[0] is likely to cause bugs when multiple entries are present or no entries are present
 	use clear names for everything. Similar Names for things that represent different things. Confusing names can lead to bugs
