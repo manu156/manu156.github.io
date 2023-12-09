@@ -34,6 +34,11 @@ I made this list based on my experience trying to make out patterns out of bugs 
 - A method should do only one thing and should have correct name
 - It is possible that a method has it's wrong name for example, a method validating user which returns true when user is valid might have return opposite value instead
 - Utility methods may have different behaviour than expected for example a utility method to convert list to set/map might throw an exception when duplicates are encountered or silently replace duplicates in order,.. 
+- No recursion; No GOTOs; Loops must have a fixed-bound
+- Restrict data to the smallest necessary scope
+- existing code might be wrong or buggy and same code might be edited. Don't assume existing code is correct 
 
 # Misc
-Some good resources: [https://github.com/google/eng-practices/tree/master](google-eng-practices)
+Some good resources: 
+- [https://github.com/google/eng-practices/tree/master](google-eng-practices)
+- [https://nasa.github.io/fprime/UsersGuide/dev/code-style.html](Nasa's code guidelines)
