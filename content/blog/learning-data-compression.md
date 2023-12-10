@@ -1,3 +1,10 @@
+---
+external: false
+title: "Learnings From Data Compression Explained"
+description: ""
+date: 2023-12-10
+---
+
 Important points from the book
 
 # Copyright Notice from original book
