@@ -1,0 +1,2 @@
+- I think I'll miss you forever
+Like the stars miss the sun in the morning sky
