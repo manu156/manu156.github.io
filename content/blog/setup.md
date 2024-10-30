@@ -6,12 +6,16 @@ date: 2020-01-20
 ---
 
 ## My Desktop Setup / Distro
-(Primary) Arch Linux + Wayland + GNOME
-(Secondary) MacOs + KarbinerElements + Maccy + kitty
+### Primary
+OS: Arch Linux(pacman) + i3  
+Terminal:   
+Terminal File Manager: https://github.com/sxyazi/yazi  
+
+### Secondary
+MacOs + KarbinerElements + Maccy + kitty
 
 ## Configs
 Key remapping - [https://github.com/wez/evremap](https://github.com/wez/evremap)  
-
 
 ## Extensions
 ```sh
