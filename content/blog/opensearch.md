@@ -82,3 +82,7 @@ bash plugins/opensearch-security/tools/securityadmin.sh -cd config/opensearch-se
 - add role mapping
 - call above securityadmin.sh again
 
+# Disable ssl
+now we can disable ssl in config. 
+`plugins.security.ssl.http.enabled: true`  
+and call apis through http   
