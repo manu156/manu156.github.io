@@ -76,3 +76,9 @@ cluster.routing.allocation.disk.watermark.flood_stage: 99.9%
 ```bash
 bash plugins/opensearch-security/tools/securityadmin.sh -cd config/opensearch-security/ -cacert config/root-ca.pem -cert config/admin.pem -key config/admin-key.pem --accept-red-cluster
 ```
+# Add internal users
+- hash a password: `bash plugins/opensearch-security/tools/hash.sh -p 123`
+- add user in config/opensearch-security/internal_users.yml
+- add role mapping
+- call above securityadmin.sh again
+
