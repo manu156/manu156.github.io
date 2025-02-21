@@ -34,6 +34,7 @@ Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
 WantedBy=default.target
 
 ```
+TODO: replace indices in awk, which can change for os to os
 script:
 ```sh
 #!/bin/bash
