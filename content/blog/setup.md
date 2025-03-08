@@ -91,9 +91,18 @@ system-monitor-next@paradoxxx.zero.gmail.com
 unite@hardpixel.eu
 
 ```
-- powertop
+- powertop (todo: implement all powertop suggested optimisations)
 - always on top notes (todo: note the best one here)
-
+also see
+- https://github.com/jcbritobr/linux_power_opt
+- https://gist.github.com/LovetheFrogs/55e686935c4cd9e3c39c61221ee00c21
+- https://github.com/AdnanHodzic/auto-cpufreq
+- https://github.com/linrunner/TLP
+- https://github.com/sn99/Optimizing-linux
+- https://github.com/jazir555/Linux-Performance-Optimizations
+- https://gist.github.com/Unixten/4483ec6e435fe6d7e2cb6dfac3f8ccd0
+- https://gist.github.com/reterVision/faab6c00fb04d09334e9
+- https://github.com/TheAlexDev23/power-options
 ## Misc
 ### Screen Resolution and scale setting on login
 Python script for resolution (source: https://github.com/T-vK/ScaleToggle/tree/master):
