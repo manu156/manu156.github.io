@@ -91,6 +91,8 @@ system-monitor-next@paradoxxx.zero.gmail.com
 unite@hardpixel.eu
 
 ```
+- powertop
+- always on top notes (todo: note the best one here)
 
 ## Misc
 ### Screen Resolution and scale setting on login
