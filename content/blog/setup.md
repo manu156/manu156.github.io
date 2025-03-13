@@ -91,7 +91,8 @@ system-monitor-next@paradoxxx.zero.gmail.com
 unite@hardpixel.eu
 
 ```
-- tailscale vpn + ssh + enable tailscale ssh + connectbot(android ssh client)
+- rog-control-center + asusctl
+- tailscale vpn + ssh + enable tailscale ssh + connectbot(android ssh client) + trailscale tray icon
 - kdeconnect (android) + valet on linux (valet is good for gnome) + valet extension
 - syncthing + tray (sudo apt install syncthingtray)
 - activity watcher or awatch(fork for wayland/gnome - https://github.com/2e3s/awatcher) + (sync if possible)
