@@ -91,6 +91,7 @@ system-monitor-next@paradoxxx.zero.gmail.com
 unite@hardpixel.eu
 
 ```
+- activity watcher or awatch(fork for wayland/gnome - https://github.com/2e3s/awatcher) 
 - powertop (todo: implement all powertop suggested optimisations)
 - always on top notes (todo: note the best one here)
 also see
