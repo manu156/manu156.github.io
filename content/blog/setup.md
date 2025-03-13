@@ -91,8 +91,8 @@ system-monitor-next@paradoxxx.zero.gmail.com
 unite@hardpixel.eu
 
 ```
-- tailscale vpn for kdeconnect tunnel over wireguard
-- kdeconnect (android) + valet on linux (valet is good for gnome) + valet extension??
+- tailscale vpn + ssh + enable tailscale ssh + connectbot(android ssh client)
+- kdeconnect (android) + valet on linux (valet is good for gnome) + valet extension
 - syncthing + tray (sudo apt install syncthingtray)
 - activity watcher or awatch(fork for wayland/gnome - https://github.com/2e3s/awatcher) + (sync if possible)
 - powertop (todo: implement all powertop suggested optimisations)
