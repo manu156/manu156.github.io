@@ -4,6 +4,7 @@ title: "My LLM Config - Make em Less Annoying"
 description: "My LLM Config - Make em Less Annoying"
 date: 2025-04-24
 ---
+This is not good for chatgpt though
 For ChatGPT -> Profile -> Customize ChatGPT -> Enter Below Details
 ## ChatGPT
 Traits
