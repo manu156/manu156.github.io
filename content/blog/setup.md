@@ -7,7 +7,7 @@ date: 2020-01-20
 
 ## My Desktop Setup / Distro
 ### Primary
-OS: Arch Linux(pacman) + i3  
+OS: Arch Linux(pacman) + hyprland
 Terminal:   
 Terminal File Manager: https://github.com/sxyazi/yazi  
 
@@ -108,6 +108,15 @@ also see
 - https://gist.github.com/Unixten/4483ec6e435fe6d7e2cb6dfac3f8ccd0
 - https://gist.github.com/reterVision/faab6c00fb04d09334e9
 - https://github.com/TheAlexDev23/power-options
+```
+🔋 Power saving tip:
+
+If you’re not using the dGPU, you can power it off using:
+
+sudo tee /proc/acpi/bbswitch <<< OFF
+
+    Requires bbswitch kernel module. Or use nvidia-suspend.service/nvidia-powerd with modern drivers.
+```
 ## Misc
 ### Screen Resolution and scale setting on login
 Python script for resolution (source: https://github.com/T-vK/ScaleToggle/tree/master):
