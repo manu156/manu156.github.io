@@ -170,3 +170,5 @@ To update refresh rate: https://github.com/jadahl/gnome-monitor-config.git
 # to set
 ./gnome-monitor-config set -LpM eDP-2 -t normal -m 2560x1600@60.002
 ```
+### To Disable / Change GPUs
+supergfxctl in cli
