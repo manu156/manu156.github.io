@@ -74,6 +74,11 @@ do
 done
 
 ```
+## Performance 
+use zram with 2*ram size: https://wiki.archlinux.org/title/Zram (zswap needs to disabled, it is enabled by default on arch. Also need more setup for hiberation)  
+sysrq: https://docs.kernel.org/admin-guide/sysrq.html  
+main arch wiki: https://wiki.archlinux.org/title/Improving_performance
+
 ## Extensions
 ```sh
 ❯ ls ~/.local/share/gnome-shell/extensions | sed "s/\s+/\\n/g" -E
