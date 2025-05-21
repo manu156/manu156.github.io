@@ -177,3 +177,44 @@ To update refresh rate: https://github.com/jadahl/gnome-monitor-config.git
 ```
 ### To Disable / Change GPUs
 supergfxctl in cli
+### Play sound on cli complete
+RN works only with single quotes: script.sh 'sleep 3'
+```bash
+#!/bin/bash
+
+# Check for input
+if [ -z "$1" ]; then
+  echo "Usage: $0 '<command string>'"
+  exit 1
+fi
+
+# Capture full command string
+CMD="$1"
+
+# Start time
+START_TIME=$(date +%s)
+
+# Execute the command string safely
+bash -c "$CMD"
+EXIT_STATUS=$?
+
+# End time
+END_TIME=$(date +%s)
+TIME_TAKEN=$((END_TIME - START_TIME))
+
+# Construct speech message
+MESSAGE="Command: $CMD. Exit status: $EXIT_STATUS. Time taken: $TIME_TAKEN seconds."
+
+# Create temporary WAV file
+TMPFILE=$(mktemp --suffix=.wav)
+
+# Use pico2wave for TTS
+echo "$MESSAGE" | pico2wave -w "$TMPFILE"
+
+# Play using ffplay
+ffplay -autoexit -nodisp "$TMPFILE"
+
+# Cleanup
+rm -f "$TMPFILE"
+
+```
