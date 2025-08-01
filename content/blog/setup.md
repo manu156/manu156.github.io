@@ -123,6 +123,8 @@ sudo tee /proc/acpi/bbswitch <<< OFF
     Requires bbswitch kernel module. Or use nvidia-suspend.service/nvidia-powerd with modern drivers.
 ```
 ## Misc
+### Zathura pdf reader
+config: https://gist.github.com/manu156/83edbd25f446d1b74d37295f0a58ad04
 ### Screen Resolution and scale setting on login
 Python script for resolution (source: https://github.com/T-vK/ScaleToggle/tree/master):
 ```python
