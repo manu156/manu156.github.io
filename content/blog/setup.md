@@ -220,3 +220,6 @@ ffplay -autoexit -nodisp "$TMPFILE"
 rm -f "$TMPFILE"
 
 ```
+## alias rm to safe-rm
+see: https://github.com/kaelzhang/shell-safe-rm?tab=readme-ov-file
+files will be moved to trash
