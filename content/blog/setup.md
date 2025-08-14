@@ -221,5 +221,6 @@ rm -f "$TMPFILE"
 
 ```
 ## alias rm to safe-rm
-see: https://github.com/kaelzhang/shell-safe-rm?tab=readme-ov-file
-files will be moved to trash
+see: https://github.com/manu156/shell-safe-rm  
+files will be moved to trash  
+todo: add feature to selectively exclude rm -rf /
