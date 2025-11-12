@@ -224,3 +224,5 @@ rm -f "$TMPFILE"
 see: https://github.com/manu156/shell-safe-rm  
 files will be moved to trash  
 todo: add feature to selectively exclude rm -rf /
+## Passwords / Keyring
+- gnome-keyring and libsecret should do the job
