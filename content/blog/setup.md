@@ -227,3 +227,6 @@ files will be moved to trash
 todo: add feature to selectively exclude rm -rf /
 ## Passwords / Keyring
 - gnome-keyring and libsecret should do the job
+## Annotation tool
+https://github.com/devmobasa/wayscriber
+
