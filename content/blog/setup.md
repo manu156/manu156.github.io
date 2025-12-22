@@ -230,3 +230,6 @@ todo: add feature to selectively exclude rm -rf /
 ## Annotation tool
 https://github.com/devmobasa/wayscriber
 
+# Issues
+## Hyprland secondary monitor lag
+- try disabling hardware cursors
