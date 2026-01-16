@@ -229,6 +229,43 @@ todo: add feature to selectively exclude rm -rf /
 - gnome-keyring and libsecret should do the job
 ## Annotation tool
 https://github.com/devmobasa/wayscriber
+## SSH & firewall
+```bash
+sudo nft list ruleset
+table inet filter {
+	chain input {
+		type filter hook input priority filter; policy drop;
+		ct state invalid drop comment "drop invalid connections"
+		ct state { established, related } accept comment "allow tracked connections"
+		iif "lo" accept comment "loopback ok"
+		ip protocol icmp accept comment "allow ICMP v4"
+		ip6 nexthdr ipv6-icmp accept comment "allow ICMP v6"
+		tcp dport 22 accept comment "allow SSH"
+		meta pkttype host limit rate 5/second burst 5 packets counter packets 2101 bytes 176051 reject with icmpx admin-prohibited
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+	}
+
+	chain output {
+		type filter hook output priority filter; policy accept;
+	}
+}
+```
+`/etc/nftables.conf` is the standard way to use firewall on arch linux  
+Sample addition for kde connect to work
+```bash
+        # KDE Connect — IPv4 LAN only
+        ip saddr { 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12 } udp dport 1714-1764 accept
+        ip saddr { 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12 } tcp dport 1714-1764 accept
+
+        # KDE Connect — IPv6 local only
+        ip6 saddr fe80::/10 udp dport 1714-1764 accept
+        ip6 saddr fc00::/7  udp dport 1714-1764 accept
+        ip6 saddr fe80::/10 tcp dport 1714-1764 accept
+        ip6 saddr fc00::/7  tcp dport 1714-1764 accept
+```
 
 # Issues
 ## Hyprland secondary monitor lag
