@@ -266,6 +266,8 @@ Sample addition for kde connect to work
         ip6 saddr fe80::/10 tcp dport 1714-1764 accept
         ip6 saddr fc00::/7  tcp dport 1714-1764 accept
 ```
+## Diff tool
+https://github.com/Wilfred/difftastic
 
 # Issues
 ## Hyprland secondary monitor lag
