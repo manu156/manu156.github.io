@@ -269,6 +269,55 @@ Sample addition for kde connect to work
 ## Diff tool
 https://github.com/Wilfred/difftastic
 
+## Nohang
+```text
+# /etc/nohang/nohang.conf
+
+## 0. Kernel message monitoring
+# @check_kmsg
+
+## 1. Common zram settings
+zram_checking_enabled = True
+
+## 2. Common PSI (Pressure Stall Information) settings
+psi_checking_enabled = True
+psi_path = /proc/pressure/memory
+psi_metrics = some_avg10
+psi_excess_duration = 3
+psi_post_action_delay = 15
+
+## 3. Poll rate
+fill_rate_mem  = 6000
+fill_rate_swap = 2000
+fill_rate_zram = 4000
+max_sleep = 10
+min_sleep = 0.1
+
+## 4. Warnings and notifications
+post_action_gui_notifications = False
+low_memory_warnings_enabled = False
+
+## 7. Victim selection & badness adjustments
+ignore_positive_oom_score_adj = False
+
+# Protect Hyprland compositor and status bar
+@BADNESS_ADJ_RE_NAME -500 /// ^(Hyprland|waybar)$
+
+
+## 9. Misc settings
+max_soft_exit_time = 10
+min_badness = 1
+post_soft_action_delay = 3
+post_zombie_delay = 0.1
+victim_cache_time = 10
+exe_timeout = 20
+
+## 10. Verbosity, debug, logging
+print_config_at_startup = True
+print_victim_status = True
+print_statistics = True
+```
+
 # Issues
 ## Hyprland secondary monitor lag
 - try disabling hardware cursors
