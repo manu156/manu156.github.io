@@ -17,9 +17,15 @@ import Footer from "../components/Footer.astro";
 export interface Props {
   title: string;
   date: Date;
+  category?: string;
+  tags?: string[];
+  series?: {
+    name: string;
+    part: number;
+  };
 }
 
-const { title, date } = Astro.props;
+const { title, date, category, tags, series } = Astro.props;
 const formattedDate = new Date(date).toLocaleDateString("en-us", {
   year: "numeric",
   month: "short",
@@ -55,7 +61,28 @@ const formattedDate = new Date(date).toLocaleDateString("en-us", {
             {title}
           </span>
         </h1>
-        <time class="block mb-[2em] text-text-muted">{formattedDate}</time>
+        <div class="flex items-center gap-2 flex-wrap mb-[2em] text-sm text-text-muted not-prose">
+          <time>{formattedDate}</time>
+          {category && (
+            <span class="px-2 py-0.5 rounded-full bg-primary-blue/15 text-text-bold text-xs font-medium">
+              {category}
+            </span>
+          )}
+          {series && (
+            <span class="px-2 py-0.5 rounded-full bg-primary-yellow/20 text-text-bold text-xs font-medium">
+              {series.name} • Part {series.part}
+            </span>
+          )}
+          {tags && tags.length > 0 && (
+            <div class="flex gap-1 items-center flex-wrap">
+              {tags.map((tag) => (
+                <span class="text-[11px] text-text-muted">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
         <slot name="content" />
       </section>
     </main>

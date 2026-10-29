@@ -13,63 +13,150 @@ const sortedPosts = posts
       new Date(b.data.date).valueOf() -
       new Date(a.data.date).valueOf()
   );
+
+// Extract unique categories
+const rawCategories = Array.from(new Set(sortedPosts.map((p) => p.data.category))).sort();
+const categories = ["All", ...rawCategories];
+
+// Group by year
+const postsByYear: Record<string, typeof sortedPosts> = {};
+for (const post of sortedPosts) {
+  const year = new Date(post.data.date).getFullYear().toString();
+  if (!postsByYear[year]) {
+    postsByYear[year] = [];
+  }
+  postsByYear[year].push(post);
+}
+const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
 ---
 
 <PageLayout>
   <PageMeta title={`Blog | ${SITE_TITLE}`} slot="meta" />
   <section slot="main">
-    <ul>
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-text-heading mb-2">Blog</h1>
+      <p class="text-text-muted text-sm">
+        Thoughts, learning notes, engineering guides, and deep dives.
+      </p>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="flex flex-wrap gap-2 mb-8" id="category-filters">
       {
-        sortedPosts.map((post) => {
-          const formattedDate = new Date(
-            post.data.date
-          ).toLocaleDateString("en-us", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          });
-          return (
-            <li class="grid grid-cols-[1fr] md:grid-cols-[1fr_auto] mb-3 md:gap-2 items-start">
-              <div class="title">
-                {post.data.external ? (
-                  <a
-                    href={post.data.url}
-                    target="_blank"
-                    class="unset
-                        transition-[background-size] duration-300 
-                        bg-gradient-to-r bg-left-bottom bg-no-repeat
-                        bg-[length:0%_55%] hover:bg-[length:100%_55%] dark:bg-[length:0%_2px] hover:dark:bg-[length:100%_2px]
-                        from-primary-blue to-primary-blue dark:from-primary-blue dark:to-primary-blue
-                      "
-                  >
-                    <span>{post.data.title}</span>
-                    <span>
-                      <i class="ml-1 mr-1 text-[12px] pb-2 fa-solid fa-up-right-from-square" />
-                    </span>
-                  </a>
-                ) : (
-                  <a
-                    href={`/blog/${post.id}`}
-                    class="unset
-                        transition-[background-size] duration-300 
-                        bg-gradient-to-r bg-left-bottom bg-no-repeat
-                        bg-[length:0%_55%] hover:bg-[length:100%_55%] dark:bg-[length:0%_2px] hover:dark:bg-[length:100%_2px]
-                        from-primary-blue to-primary-blue dark:from-primary-blue dark:to-primary-blue
-                      "
-                  >
-                    {post.data.title}
-                  </a>
-                )}
-              </div>
-              <div class="text-text-muted text-sm italic pt-1">
-                <time datetime={post.data.date.toISOString()}>
-                  {formattedDate}
-                </time>
-              </div>
-            </li>
-          );
-        })
+        categories.map((cat, idx) => (
+          <button
+            class:list={[
+              "category-filter-btn px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors border",
+              idx === 0
+                ? "active bg-primary-blue text-black border-primary-blue"
+                : "bg-transparent text-text-muted border-text-muted/30 hover:border-primary-blue hover:text-text-heading",
+            ]}
+            data-category={cat}
+          >
+            {cat}
+          </button>
+        ))
       }
-    </ul>
+    </div>
+
+    <!-- Grouped by Year -->
+    <div id="posts-container" class="space-y-10">
+      {
+        years.map((year) => (
+          <div class="year-group" data-year={year}>
+            <h2 class="text-xl font-bold text-text-heading mb-4 pb-2 border-b border-text-muted/20 flex items-center justify-between">
+              <span>{year}</span>
+              <span class="text-xs font-normal text-text-muted">
+                {postsByYear[year].length} {postsByYear[year].length === 1 ? "post" : "posts"}
+              </span>
+            </h2>
+            <ul class="space-y-5">
+              {postsByYear[year].map((post) => {
+                const formattedDate = new Date(post.data.date).toLocaleDateString("en-us", {
+                  month: "short",
+                  day: "numeric",
+                });
+                const href = post.data.external ? post.data.url : `/blog/${post.id}`;
+                const target = post.data.external ? "_blank" : undefined;
+                return (
+                  <li
+                    class="post-item transition-all"
+                    data-category={post.data.category}
+                  >
+                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <a
+                          href={href}
+                          target={target}
+                          class="unset font-semibold text-text-heading hover:text-primary-blue transition-colors text-base"
+                        >
+                          {post.data.title}
+                          {post.data.external && (
+                            <i class="ml-1 text-[11px] fa-solid fa-up-right-from-square" />
+                          )}
+                        </a>
+                        {post.data.series && (
+                          <span class="text-[11px] px-2 py-0.5 rounded-full bg-primary-yellow/20 text-text-bold font-medium">
+                            Part {post.data.series.part}
+                          </span>
+                        )}
+                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-primary-blue/15 text-text-bold font-medium">
+                          {post.data.category}
+                        </span>
+                      </div>
+                      <time
+                        datetime={post.data.date.toISOString()}
+                        class="text-text-muted text-xs whitespace-nowrap"
+                      >
+                        {formattedDate}
+                      </time>
+                    </div>
+                    {post.data.description && (
+                      <p class="text-text-muted text-xs mt-1 line-clamp-1 leading-relaxed">
+                        {post.data.description}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
   </section>
 </PageLayout>
+
+<script>
+  const filterBtns = document.querySelectorAll(".category-filter-btn");
+  const yearGroups = document.querySelectorAll<HTMLElement>(".year-group");
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const selected = btn.getAttribute("data-category");
+
+      filterBtns.forEach((b) => {
+        b.classList.remove("active", "bg-primary-blue", "text-black", "border-primary-blue");
+        b.classList.add("bg-transparent", "text-text-muted", "border-text-muted/30");
+      });
+      btn.classList.add("active", "bg-primary-blue", "text-black", "border-primary-blue");
+      btn.classList.remove("bg-transparent", "text-text-muted", "border-text-muted/30");
+
+      yearGroups.forEach((group) => {
+        let visibleCount = 0;
+        const items = group.querySelectorAll<HTMLElement>(".post-item");
+        items.forEach((item) => {
+          const itemCat = item.getAttribute("data-category");
+          if (selected === "All" || itemCat === selected) {
+            item.style.display = "";
+            visibleCount++;
+          } else {
+            item.style.display = "none";
+          }
+        });
+
+        group.style.display = visibleCount > 0 ? "" : "none";
+      });
+    });
+  });
+</script>

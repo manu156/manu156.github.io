@@ -30,7 +30,13 @@ const ogImageAbsoluteUrl =
     : undefined;
 ---
 
-<ContentLayout title={post.data.title} date={post.data.date}>
+<ContentLayout
+  title={post.data.title}
+  date={post.data.date}
+  category={post.data.category}
+  tags={post.data.tags}
+  series={post.data.series}
+>
   <BlogPostMeta
     title={post.data.title}
     description={post.data.external ? undefined : post.data.description}

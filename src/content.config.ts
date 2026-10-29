@@ -6,7 +6,16 @@ const baseSchema = z.object({
   draft: z.boolean().default(false),
   featured: z.boolean().default(false),
   title: z.string(),
+  description: z.string().optional(),
   date: z.coerce.date(),
+  category: z.string().default("General"),
+  tags: z.array(z.string()).default([]),
+  series: z
+    .object({
+      name: z.string(),
+      part: z.number(),
+    })
+    .optional(),
 });
 
 const blog = defineCollection({
@@ -14,7 +23,6 @@ const blog = defineCollection({
   schema: z.discriminatedUnion("external", [
     baseSchema.extend({
       external: z.literal(false),
-      description: z.string().optional(),
       ogImagePath: z.string().optional(),
       canonicalUrl: z.string().optional(),
     }),
@@ -29,7 +37,6 @@ const projects = defineCollection({
   loader: glob({ pattern: "**/*.mdoc", base: "./content/projects" }),
   schema: baseSchema.extend({
     url: z.string(),
-    description: z.string().optional(),
   }),
 });
 
