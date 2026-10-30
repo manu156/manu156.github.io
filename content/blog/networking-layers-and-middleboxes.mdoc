@@ -1,0 +1,125 @@
+---
+external: false
+title: "Networking: Layers, Sockets, and Middleboxes"
+description: "A quick-reference guide to the network hierarchy from Application and TLS down to the Physical layer, and how middleboxes like NAT gateways handle connection state."
+date: 2026-10-30
+category: "Systems & Languages"
+tags: ["networking", "tcp", "tls", "nat", "systems-programming"]
+---
+
+A **middlebox** is any device on the network path between a client and server that inspects, modifies, or filters traffic rather than simply forwarding IP packets based on standard routing tables. Common middleboxes include Network Address Translation (NAT) gateways, stateful firewalls, load balancers, and deep packet inspection (DPI) appliances.
+
+A **NAT** allows an entire private subnet (e.g., `10.0.0.0/24`) to share one or a few public IP addresses. To route traffic back and forth correctly, the NAT maintains a stateful translation table (such as the Linux kernel’s `conntrack` table).
+
+---
+
+## Why Can't a NAT "Just Re-Cache" Dropped Pairs?
+
+When an idle connection drops its translation pair from the NAT’s state table, you cannot simply resume the connection by "re-caching" on the next packet. Here is why:
+
+```text
+[ Private Client ] ───> [ NAT Gateway ] ───> [ Server ]
+10.0.0.5:45212       Public IP: ???       203.0.113.50:443
+```
+
+### 1. Stateful Firewalls Reject Non-SYN Packets
+
+A NAT gateway is almost always paired with a stateful firewall. Valid TCP connections must begin with a `SYN` packet.
+
+* If the NAT drops the entry from its table, the connection is gone from memory.
+* When your application sends its next packet over the existing socket, that packet has `ACK` or `PSH-ACK` flags set (not `SYN`).
+* When the firewall inspects this packet, it sees an **out-of-state packet** (in `nftables`/`iptables` terms: `ct state INVALID`). Because accepting random `ACK` packets without a prior handshake is a major security vulnerability (it opens the network to blind spoofing and injection attacks), the firewall drops the packet or replies with a `RST`.
+
+### 2. Loss of Public Port Mapping (Port Mutation)
+
+When the connection was first established, the NAT mapped the client's internal socket to a specific external port, say:
+
+$$\text{Internal: } 10.0.0.5:45212 \longleftrightarrow \text{Public: } 198.51.100.1:55000$$
+
+The remote server established its TCP state machine bound strictly to the 4-tuple:
+
+$$(\text{198.51.100.1, 55000, 203.0.113.50, 443})$$
+
+If the NAT purges this mapping and your client sends a packet:
+
+* The NAT no longer remembers that this client had port `55000`.
+* It assigns a *new* available ephemeral port, such as `55001`.
+* When the server receives the packet from `198.51.100.1:55001`, it looks up its active connections, finds no connection matching port `55001`, and sends back a `RST` (connection reset) packet, instantly killing the socket.
+
+### 3. Inbound Traffic Becomes Unroutable
+
+If the server tries to send data to the client (or send an HTTP/2 ping), the packet arrives at the NAT with destination `198.51.100.1:55000`.
+
+* Because the table entry was evicted, the NAT has no record of which internal private IP requested traffic on port `55000`.
+* The NAT drops the packet immediately. The client never receives it, and the connection hangs until timing out.
+
+---
+
+## Network Hierarchy: Where Sockets, TCP, and TLS Fit
+
+A **socket** is not a network protocol or wire format—it is an **operating system abstraction (API handle)** that user-space software uses to communicate with the kernel's network subsystem.
+
+In terms of how data flows down the stack, the hierarchy is structured into distinct layers:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 7: Application (HTTP/1.1, HTTP/2, Postgres, SSH)    │
+│    └─ Cryptography / Security: TLS (Transport Layer Security)│
+├─────────────────────────────────────────────────────────────┤
+│  User / Kernel Boundary: Sockets API (File Descriptor / fd) │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 4: Transport (TCP, UDP)                              │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 3: Network / Internet (IPv4, IPv6, ICMP)             │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 2: Data Link (Ethernet, Wi-Fi, MAC addresses, ARP)   │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 1: Physical (Fiber, Copper, Radio Waves, Bits)       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Layer 7: Application Layer
+
+This is where your program's raw business protocol lives (e.g., `GET /index.html`, database wire formats like the PostgreSQL frontend/backend protocol, or gRPC serialization).
+
+### The Security Layer: TLS
+
+TLS conceptually sits between the Application layer and the Transport layer.
+
+* In user space, TLS acts as an encryption/decryption filter.
+* Your application passes plaintext bytes (e.g., HTTP requests) to a TLS library (OpenSSL, BoringSSL, Rustls).
+* The TLS library encrypts the payload into **TLS Records** (using symmetric ciphers like AES-GCM) and attaches authentication tags.
+* *Note on modern kernels:* Features like kTLS (Kernel TLS) offload this encryption down into the OS kernel, but the protocol relationship remains identical: TLS encrypts the payload before TCP segments it.
+
+### The Boundary: Sockets API
+
+The socket is the bridge between user-space applications and the kernel's network stack:
+
+* In POSIX systems, calling `socket(AF_INET, SOCK_STREAM, 0)` returns an integer file descriptor.
+* When your app writes TLS records to this socket (`write(fd, ...)`) or reads from it, the OS kernel buffers the bytes and hands them to the transport protocol.
+
+### Layer 4: Transport Layer (TCP / UDP)
+
+TCP does not understand what the application data means; it only sees a stream of bytes.
+
+* **Segmentation:** Chops the byte stream into segments that fit the Maximum Segment Size (MSS, typically 1460 bytes).
+* **Guarantees:** Adds sequence numbers, acknowledgment tracking, retransmissions, flow control (window scaling), and congestion control algorithms (Cubic, BBR).
+* **Addressing:** Uses **Ports** (e.g., port 443, port 5432) to direct traffic to the correct process on a host.
+
+### Layer 3: Network Layer (IPv4 / IPv6)
+
+TCP segments are wrapped in IP packets.
+
+* **Addressing:** Uses **IP addresses** (e.g., `192.168.1.10`, `142.250.190.46`).
+* **Routing:** Inspects routing tables and passes packets across multiple hops/routers across the internet until they reach the destination host. IP provides no delivery guarantees (best-effort delivery).
+
+### Layer 2: Data Link Layer (Ethernet, 802.11 Wi-Fi)
+
+IP packets cannot travel across physical wires or radio waves by themselves; they must be put into **frames** designed for the local physical medium.
+
+* **Addressing:** Uses hardware **MAC addresses**.
+* **Scope:** Only functions on the local link (within your local subnet or switch). To cross to another network, the frame targets the default gateway's MAC address (resolved via ARP/NDP).
+
+### Layer 1: Physical Layer
+
+The physical hardware that translates frames into electrical voltages, radio frequency modulations (Wi-Fi/5G), or light pulses down a fiber-optic cable.
