@@ -1,0 +1,622 @@
+---
+external: false
+title: "Design Patterns: Behavioral"
+description: "Comprehensive guide to Behavioral Design Patterns: Strategy, Observer, Command, Chain of Responsibility, State, Template Method, and more."
+date: 2024-07-11
+category: "Engineering Practices"
+tags: ["design-patterns", "architecture", "software-design", "behavioral"]
+series:
+  name: "Design Patterns"
+  part: 4
+---
+
+> Part of the **Design Patterns** series. For a high-level overview of software design patterns and principles, see [Design Patterns: An Architectural Overview](/blog/design-patterns).
+>
+> **Sub-blogs in this series:**
+> - [Creational Patterns](/blog/design-patterns-creational)
+> - [Structural Patterns](/blog/design-patterns-structural)
+> - [Behavioral Patterns](/blog/design-patterns-behavioral) (Current)
+
+---
+
+# Behavioral Patterns
+
+Behavioral design patterns are concerned with **algorithms and the assignment of responsibilities between objects**. 
+
+They do not merely describe patterns of objects or classes, but also the patterns of communication between them. By using behavioral patterns, you can decouple senders from receivers, encapsulate stateful transitions, and structure complex control flows that would otherwise be difficult to trace and maintain.
+
+The canonical Gang of Four (GoF) behavioral patterns include:
+1. **Strategy**
+2. **Observer**
+3. **Command**
+4. **Chain of Responsibility**
+5. **State**
+6. **Template Method**
+7. **Iterator**
+8. **Mediator**
+9. **Memento**
+10. **Visitor**
+
+---
+
+## 1. Strategy Pattern
+
+The **Strategy pattern** defines a family of algorithms, encapsulates each one inside a dedicated class, and makes them interchangeable at runtime. It lets the algorithm vary independently from the clients that use it.
+
+### Technical Invariants
+
+1. **Open-Closed Principle (OCP):** New algorithms can be introduced without modifying existing client code or conditional statements.
+2. **Elimination of Conditional Branches:** Eliminates massive `if/else` or `switch` blocks that select algorithms based on runtime flags.
+3. **First-Class Modern Idiom:** In modern languages supporting first-class functions (Java 8+ lambdas, Python, TypeScript, Go), strategies can simply be passed as function references without creating separate classes.
+
+```java
+// Strategy Interface
+@FunctionalInterface
+public interface PricingStrategy {
+    BigDecimal calculate(BigDecimal basePrice);
+}
+
+// Context
+public class ShoppingCart {
+    private final List<BigDecimal> items = new ArrayList<>();
+    private PricingStrategy pricingStrategy;
+
+    public ShoppingCart(PricingStrategy pricingStrategy) {
+        this.pricingStrategy = pricingStrategy;
+    }
+
+    public void setPricingStrategy(PricingStrategy strategy) {
+        this.pricingStrategy = strategy;
+    }
+
+    public void addItem(BigDecimal price) { items.add(price); }
+
+    public BigDecimal checkoutTotal() {
+        BigDecimal subtotal = items.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        return pricingStrategy.calculate(subtotal);
+    }
+}
+
+// Client Usage with Lambdas or Dedicated Strategies:
+ShoppingCart cart = new ShoppingCart(subtotal -> subtotal.multiply(BigDecimal.valueOf(0.90))); // 10% discount
+```
+
+### Real-World Occurrences
+- `Comparator.comparing(...)` in Java collections sorting.
+- Payment processing engines switching between Stripe, PayPal, and Adyen strategies.
+
+---
+
+## 2. Observer Pattern
+
+The **Observer pattern** defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically.
+
+It is the foundation of event-driven architectures, pub/sub messaging, and modern reactive frameworks.
+
+### Technical Invariants
+
+1. **Loose Coupling:** The Subject knows only that its observers implement the `Observer` interface; it maintains no knowledge of their concrete classes or downstream behaviors.
+2. **Broadcast Notification:** The Subject iterates through an internal collection of registered observers and pushes (or signals) state changes without expecting return values.
+3. **Dynamic Subscription:** Observers can subscribe or unsubscribe at runtime.
+
+```java
+// Observer interface
+public interface OrderEventListener {
+    void onOrderPlaced(String orderId, BigDecimal amount);
+}
+
+// Subject
+public class OrderService {
+    private final List<OrderEventListener> listeners = new CopyOnWriteArrayList<>();
+
+    public void subscribe(OrderEventListener listener) { listeners.add(listener); }
+    public void unsubscribe(OrderEventListener listener) { listeners.remove(listener); }
+
+    public void placeOrder(String orderId, BigDecimal amount) {
+        // Business logic
+        System.out.println("Order " + orderId + " persisted to database.");
+
+        // Broadcast event to observers
+        for (OrderEventListener listener : listeners) {
+            listener.onOrderPlaced(orderId, amount);
+        }
+    }
+}
+
+// Observers
+public class EmailNotificationService implements OrderEventListener {
+    @Override
+    public void onOrderPlaced(String orderId, BigDecimal amount) {
+        System.out.println("Sending confirmation email for order: " + orderId);
+    }
+}
+
+public class InventorySyncService implements OrderEventListener {
+    @Override
+    public void onOrderPlaced(String orderId, BigDecimal amount) {
+        System.out.println("Deducting warehouse stock for order: " + orderId);
+    }
+}
+```
+
+### Real-World Occurrences
+- Spring Framework: `ApplicationEventPublisher` and `@EventListener`.
+- Reactive Streams: RxJava, Project Reactor (`Flux` / `Mono`), RxJS.
+
+---
+
+## 3. Command Pattern
+
+The **Command pattern** encapsulates a request as an object, thereby letting you parameterize clients with different requests, queue or log requests, and support undoable operations.
+
+### Technical Invariants
+
+1. **Separation of Invoker and Receiver:** The Invoker (e.g., a button, a scheduler, or a queue worker) triggers execution via `.execute()` without knowing who the Receiver is or what business logic is executed.
+2. **Reversible Operations:** Commands can store prior state before execution to support `.undo()`.
+3. **Deferred / Asynchronous Execution:** Because the invocation is packaged into an object, commands can be serialized, placed in a queue, scheduled for later, or distributed across a cluster.
+
+```java
+// Command interface
+public interface Command {
+    void execute();
+    void undo();
+}
+
+// Receiver
+public class TextDocument {
+    private final StringBuilder text = new StringBuilder();
+
+    public void append(String str) { text.append(str); }
+    public void deleteLast(int length) {
+        int start = text.length() - length;
+        text.delete(start, text.length());
+    }
+    public String getContent() { return text.toString(); }
+}
+
+// Concrete Command
+public class InsertTextCommand implements Command {
+    private final TextDocument document;
+    private final String textToInsert;
+
+    public InsertTextCommand(TextDocument doc, String textToInsert) {
+        this.document = doc;
+        this.textToInsert = textToInsert;
+    }
+
+    @Override
+    public void execute() {
+        document.append(textToInsert);
+    }
+
+    @Override
+    public void undo() {
+        document.deleteLast(textToInsert.length());
+    }
+}
+
+// Invoker: Command History Manager
+public class EditorHistory {
+    private final Deque<Command> undoStack = new ArrayDeque<>();
+
+    public void executeCommand(Command cmd) {
+        cmd.execute();
+        undoStack.push(cmd);
+    }
+
+    public void undo() {
+        if (!undoStack.isEmpty()) {
+            Command cmd = undoStack.pop();
+            cmd.undo();
+        }
+    }
+}
+```
+
+---
+
+## 4. Chain of Responsibility
+
+The **Chain of Responsibility pattern** avoids coupling the sender of a request to its receiver by giving more than one object a chance to handle the request. Receivers are chained together, and the request passes along the chain until an object handles it or the chain terminates.
+
+### Technical Invariants
+
+1. **Implicit Receiver Selection:** The client submits a request to the head of the chain; it does not know or care which link in the chain will ultimately handle it.
+2. **Successor Delegation:** Each link in the chain holds a reference to the `next` link and decides whether to process the request, pass it along, or halt the pipeline.
+
+```java
+// Request context
+public record HttpRequestContext(String user, String token, String role, String payload) {}
+
+// Handler abstraction
+public abstract class HttpHandler {
+    private HttpHandler next;
+
+    public HttpHandler linkWith(HttpHandler next) {
+        this.next = next;
+        return next;
+    }
+
+    public void handle(HttpRequestContext ctx) {
+        if (process(ctx) && next != null) {
+            next.handle(ctx);
+        }
+    }
+
+    // Return true to continue down the chain, false to short-circuit
+    protected abstract boolean process(HttpRequestContext ctx);
+}
+
+// Concrete Link 1: Auth Token Check
+public class AuthenticationHandler extends HttpHandler {
+    @Override
+    protected boolean process(HttpRequestContext ctx) {
+        if (ctx.token() == null || ctx.token().isBlank()) {
+            System.out.println("401 Unauthorized: Missing bearer token.");
+            return false; // Short-circuit
+        }
+        return true;
+    }
+}
+
+// Concrete Link 2: Role Authorization Check
+public class RoleCheckHandler extends HttpHandler {
+    @Override
+    protected boolean process(HttpRequestContext ctx) {
+        if (!"ADMIN".equals(ctx.role())) {
+            System.out.println("403 Forbidden: Admin privileges required.");
+            return false;
+        }
+        return true;
+    }
+}
+```
+
+### Real-World Occurrences
+- Java Servlet `FilterChain`.
+- Express.js / Node.js middleware pipeline (`(req, res, next) => { ... }`).
+- Spring Security filter chains.
+
+---
+
+## 5. State Pattern
+
+The **State pattern** allows an object to alter its behavior when its internal state changes. The object will appear to change its class.
+
+Unlike an unwieldy state machine driven by giant `switch (state)` statements across every method, the State pattern encapsulates each state as an independent class implementing a state interface.
+
+### Technical Invariants
+
+1. **State Polymorphism:** State-specific logic is partitioned across subclasses. Adding a new state requires only adding a new state class without mutating existing ones.
+2. **Context Delegation:** The Context holds a reference to the `CurrentState` object and delegates actions to it: `state.handleAction(context)`.
+
+```java
+// State interface
+public interface OrderState {
+    void pay(OrderContext ctx);
+    void ship(OrderContext ctx);
+    void cancel(OrderContext ctx);
+}
+
+// Context
+public class OrderContext {
+    private OrderState state = new PendingPaymentState();
+
+    public void setState(OrderState state) { this.state = state; }
+
+    public void pay() { state.pay(this); }
+    public void ship() { state.ship(this); }
+    public void cancel() { state.cancel(this); }
+}
+
+// Concrete State: Pending Payment
+public class PendingPaymentState implements OrderState {
+    @Override
+    public void pay(OrderContext ctx) {
+        System.out.println("Payment processed successfully.");
+        ctx.setState(new PaidState());
+    }
+
+    @Override
+    public void ship(OrderContext ctx) {
+        throw new IllegalStateException("Cannot ship an unpaid order!");
+    }
+
+    @Override
+    public void cancel(OrderContext ctx) {
+        System.out.println("Order cancelled.");
+        ctx.setState(new CancelledState());
+    }
+}
+
+// Concrete State: Paid
+public class PaidState implements OrderState {
+    @Override
+    public void pay(OrderContext ctx) {
+        throw new IllegalStateException("Order is already paid.");
+    }
+
+    @Override
+    public void ship(OrderContext ctx) {
+        System.out.println("Dispatching parcel via courier.");
+        ctx.setState(new ShippedState());
+    }
+
+    @Override
+    public void cancel(OrderContext ctx) {
+        System.out.println("Refunding money and cancelling order.");
+        ctx.setState(new CancelledState());
+    }
+}
+```
+
+---
+
+## 6. Template Method Pattern
+
+The **Template Method pattern** defines the skeleton of an algorithm in an operation, deferring some steps to subclasses. It lets subclasses redefine certain steps of an algorithm without changing the algorithm's overarching structure.
+
+It exemplifies the **"Hollywood Principle"**: *Don't call us, we'll call you.*
+
+### Technical Invariants
+
+1. **Final Algorithm Skeleton:** The base class provides a `final` template method dictating the invariant order of operations.
+2. **Hook and Abstract Primitive Methods:** Subclasses provide concrete implementations for abstract steps or selectively override optional hook methods.
+
+```java
+public abstract class DataPipeline {
+
+    // The Template Method (sealed algorithm execution order)
+    public final void runPipeline() {
+        readSource();
+        parseData();
+        if (requiresValidation()) {
+            validate();
+        }
+        writeOutput();
+    }
+
+    protected abstract void readSource();
+    protected abstract void parseData();
+    protected abstract void writeOutput();
+
+    // Hook method with default implementation
+    protected boolean requiresValidation() {
+        return true;
+    }
+
+    protected void validate() {
+        System.out.println("Running standard schema validation.");
+    }
+}
+
+// Subclass providing specific data formats
+public class CsvDataPipeline extends DataPipeline {
+    @Override
+    protected void readSource() { System.out.println("Reading local CSV file."); }
+
+    @Override
+    protected void parseData() { System.out.println("Parsing comma-separated rows."); }
+
+    @Override
+    protected void writeOutput() { System.out.println("Ingesting records into PostgreSQL."); }
+}
+```
+
+### Real-World Occurrences
+- `HttpServlet` methods (`service()` calls `doGet()`, `doPost()`).
+- Testing framework runners (JUnit lifecycle methods).
+
+---
+
+## 7. Iterator Pattern
+
+The **Iterator pattern** provides a way to access the elements of an aggregate object sequentially without exposing its underlying internal representation (whether array, binary tree, hash table, or graph).
+
+### Technical Invariants
+
+1. **Separation of Traversal from Storage:** The aggregate class focuses solely on storing data; the iterator encapsulates current index/node tracking, traversal direction, and bounds checking.
+2. **Concurrent Iteration:** Multiple iterators can traverse the same collection independently at the same time.
+
+```java
+public interface SimpleIterator<T> {
+    boolean hasNext();
+    T next();
+}
+
+public class BinaryTreeNode<T> {
+    public T value;
+    public BinaryTreeNode<T> left;
+    public BinaryTreeNode<T> right;
+}
+
+// In-order traversal iterator for binary tree
+public class InOrderTreeIterator<T> implements SimpleIterator<T> {
+    private final Deque<BinaryTreeNode<T>> stack = new ArrayDeque<>();
+
+    public InOrderTreeIterator(BinaryTreeNode<T> root) {
+        pushLeft(root);
+    }
+
+    private void pushLeft(BinaryTreeNode<T> node) {
+        while (node != null) {
+            stack.push(node);
+            node = node.left;
+        }
+    }
+
+    @Override
+    public boolean hasNext() {
+        return !stack.isEmpty();
+    }
+
+    @Override
+    public T next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        BinaryTreeNode<T> node = stack.pop();
+        pushLeft(node.right);
+        return node.value;
+    }
+}
+```
+
+---
+
+## 8. Mediator Pattern
+
+The **Mediator pattern** defines an object that encapsulates how a set of objects interact. It promotes loose coupling by keeping objects from referring to each other explicitly, allowing their interaction to be varied independently.
+
+Instead of a chaotic web of many-to-many dependencies ($O(N^2)$ connections), all components communicate exclusively through the Mediator ($O(N)$ connections).
+
+```
+Direct Coupling (Chaotic):            Mediator Pattern (Star Hub):
+   [Component A] ─── [Component B]       [Component A]     [Component B]
+         │      ╳         │                    │                 │
+         │    ╱   ╲       │                    ▼                 ▼
+   [Component C] ─── [Component D]          [   Central Mediator   ]
+                                               ▲                 ▲
+                                               │                 │
+                                         [Component C]     [Component D]
+```
+
+### Real-World Occurrences
+- Air Traffic Control tower coordinating runway takeoffs and landings without planes having to coordinate peer-to-peer.
+- Chat room hub routing messages between participants.
+- Dialog box coordinating checkboxes, text inputs, and submit button states.
+
+---
+
+## 9. Memento Pattern
+
+The **Memento pattern** captures and externalizes an object's internal state without violating encapsulation, allowing the object to be restored to this state later.
+
+### Technical Invariants
+
+1. **Three Distinct Roles:**
+   - **Originator:** The domain object that produces a snapshot of its state and can rehydrate itself from a memento.
+   - **Memento:** The passive value object holding the serialized snapshot. Its internal state should be opaque or read-only to outside objects.
+   - **Caretaker:** Responsible for the memento's safekeeping (e.g., an undo stack or disk storage), but never inspects or modifies the memento's contents.
+
+```java
+// Memento (Immutable snapshot)
+public record CanvasMemento(String jsonLayersState, long timestamp) {}
+
+// Originator
+public class Canvas {
+    private String layersState;
+
+    public void setLayersState(String state) { this.layersState = state; }
+    public String getLayersState() { return layersState; }
+
+    public CanvasMemento save() {
+        return new CanvasMemento(layersState, System.currentTimeMillis());
+    }
+
+    public void restore(CanvasMemento memento) {
+        this.layersState = memento.jsonLayersState();
+    }
+}
+
+// Caretaker
+public class CanvasHistory {
+    private final Deque<CanvasMemento> history = new ArrayDeque<>();
+
+    public void push(CanvasMemento memento) { history.push(memento); }
+    public CanvasMemento pop() { return history.pop(); }
+}
+```
+
+---
+
+## 10. Visitor Pattern
+
+The **Visitor pattern** lets you define a new operation on an object structure without changing the classes of the elements on which it operates.
+
+It implements **Double Dispatch**: the operation that gets executed depends on both the runtime type of the Visitor and the runtime type of the Visited Element.
+
+### Technical Invariants
+
+1. **Element Interface:** Declares `accept(Visitor visitor)`.
+2. **Double Dispatch Resolution:** Inside the element, it calls `visitor.visit(this)`, passing its concrete self so the compiler selects the correctly overloaded method.
+
+```java
+// Element hierarchy
+public interface AstNode {
+    void accept(AstVisitor visitor);
+}
+
+public class VariableNode implements AstNode {
+    public final String name;
+    public VariableNode(String name) { this.name = name; }
+
+    @Override
+    public void accept(AstVisitor visitor) {
+        visitor.visit(this); // Double dispatch!
+    }
+}
+
+public class BinaryOpNode implements AstNode {
+    public final AstNode left;
+    public final AstNode right;
+    public final String operator;
+
+    public BinaryOpNode(AstNode left, String operator, AstNode right) {
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
+    }
+
+    @Override
+    public void accept(AstVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+// Visitor Interface
+public interface AstVisitor {
+    void visit(VariableNode node);
+    void visit(BinaryOpNode node);
+}
+
+// Concrete Visitor: Pretty Printer
+public class PrettyPrintVisitor implements AstVisitor {
+    @Override
+    public void visit(VariableNode node) {
+        System.out.print(node.name);
+    }
+
+    @Override
+    public void visit(BinaryOpNode node) {
+        System.out.print("(");
+        node.left.accept(this);
+        System.out.print(" " + node.operator + " ");
+        node.right.accept(this);
+        System.out.print(")");
+    }
+}
+```
+
+---
+
+## Behavioral Patterns Decision Matrix
+
+| When You Want To... | Recommended Pattern |
+| :--- | :--- |
+| Swap algorithms or business calculations dynamically at runtime | **Strategy** |
+| Broadcast state changes to multiple unknown consumers | **Observer** |
+| Queue operations, execute asynchronously, or support multi-level undo | **Command** |
+| Pass requests through an ordered series of handlers/filters | **Chain of Responsibility** |
+| Change an object's behavior based on internal state transitions | **State** |
+| Enforce an algorithm's overall skeleton while allowing sub-step customizations | **Template Method** |
+| Traverse complex data structures without exposing internal node layouts | **Iterator** |
+| Disentangle dense $M \times N$ object interactions through a single coordinator | **Mediator** |
+| Take checkpoints/snapshots of internal state without breaking encapsulation | **Memento** |
+| Add new analyses/transformations to a fixed class hierarchy without modifying it | **Visitor** |
+
+---
+
+## Series Navigation
+
+- ⬅️ **Previous:** [Design Patterns: Structural](/blog/design-patterns-structural)
+- 🏠 **Overview:** [Design Patterns: An Architectural Overview](/blog/design-patterns)
+- ⏮️ **Part 2:** [Design Patterns: Creational](/blog/design-patterns-creational)
