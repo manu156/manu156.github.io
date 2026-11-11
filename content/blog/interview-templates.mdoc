@@ -1,0 +1,301 @@
+---
+external: false
+title: "Engineering Interview Templates: Minimal Cheatsheets for DSA, LLD, and HLD"
+description: "Minimal, structured interview cheat sheets and frameworks for Coding (DSA), Low-Level Design (LLD/Machine Coding), and High-Level System Design (HLD)."
+date: 2026-11-11
+category: "Engineering Practices"
+tags: ["interviews", "system-design", "low-level-design", "dsa", "architecture"]
+---
+
+A collection of minimal, copy-pasteable interview checklists and structured response templates for Data Structures & Algorithms (DSA), Low-Level Design (LLD), and High-Level System Design (HLD).
+
+---
+
+# 1. Coding / DSA Round Template
+
+**Target Time:** 45 minutes (Clarify: 5m | Approach & Trade-offs: 10m | Code: 20m | Test & Dry Run: 7m | Wrap-up: 3m)
+
+### Step 1: Clarification & Bounds
+* **Inputs & Outputs:** Types, bounds, return format, empty/null handling.
+* **Constraints:** Can items be negative? Are there duplicates? Is input sorted? Can we mutate in-place?
+* **Constraint $\to$ Expected Complexity Guide:**
+  - $N \le 10 \implies O(N!)$ (Backtracking)
+  - $N \le 20 \implies O(2^N)$ (Bitmask / Subsets)
+  - $N \le 500 \implies O(N^3)$ (Floyd-Warshall, 3D DP)
+  - $N \le 5 \times 10^3 \implies O(N^2)$ (Nested loops, 2D DP)
+  - $N \le 10^5 \implies O(N \log N)$ (Sorting, Divide & Conquer, Binary Search)
+  - $N \le 10^7 \implies O(N)$ (Two Pointers, Sliding Window, Monotonic Stack, Hash Map)
+  - $N \ge 10^9 \implies O(\log N)$ or $O(1)$ (Binary Search on Answer, Math)
+
+### Step 2: Test Cases to State Upfront
+1. **Standard Case:** Normal, non-trivial input.
+2. **Edge Cases:** Empty array, single element, all duplicates, negative values.
+3. **Adversarial Case:** Inverted order, extreme bounds, large skew.
+
+### Step 3: Pattern Identification
+* **Two Pointers:** Sorted arrays, pairs, opposite ends, merging.
+* **Sliding Window:** Subarrays or substrings with dynamic/fixed length constraint $K$.
+* **Fast & Slow Pointers:** Cycle detection, finding list middle.
+* **Monotonic Stack / Queue:** Next greater/smaller element, range bounds, sliding window max.
+* **Binary Search on Answer:** Monotonic feasibility function (`isPossible(mid)`).
+* **BFS / DFS:** Shortest path in unweighted graphs (BFS), tree traversals, connected components (DFS).
+* **Topological Sort:** Directed Acyclic Graphs (DAG), build order, task dependencies.
+* **Union-Find (DSU):** Dynamic connectivity, cycle check in undirected graphs.
+* **Dynamic Programming:** Overlapping subproblems, state definition & transitions.
+
+### Step 4: Implementation Checklist
+- [ ] Guard clauses for `null`, `empty`, or out-of-range inputs first.
+- [ ] Descriptive variable names (`leftIndex`, `currentSum` instead of `i`, `s`).
+- [ ] Explicit loop invariants and state updates.
+- [ ] Modular helpers if logic exceeds 15–20 lines.
+
+### Step 5: Dry-Run & Complexity
+- [ ] Trace an edge case line-by-line using a variable state table.
+- [ ] State **Time Complexity**: Average and worst-case with justification.
+- [ ] State **Space Complexity**: Distinguish auxiliary memory from output memory.
+
+---
+
+# 2. Low-Level Design (LLD / Machine Coding) Template
+
+**Target Time:** 45–60 minutes (Scope: 8m | Entities & Relationships: 12m | Patterns: 10m | Coding: 25m | Review: 5m)
+
+> 📚 **Related Design Pattern Deep Dives:**
+> * [Design Patterns: Architectural Overview & SOLID Principles](/blog/design-patterns)
+> * [Creational Patterns Guide](/blog/design-patterns-creational) (Factories, Builder, Singleton, Prototype)
+> * [Structural Patterns & The "Wrapper Family"](/blog/design-patterns-structural) (Decorator, Proxy, Facade, Adapter, Composite, Flyweight, Bridge)
+> * [Behavioral Patterns Guide](/blog/design-patterns-behavioral) (Strategy, Observer, Command, Chain of Responsibility, Mediator, State)
+
+### Step 1: Requirements & Scope Bounding
+* **In-Scope (Must Have):** 2–3 core functional workflows.
+* **Out-of-Scope (Won't Have):** External gateways, auth services, persistence UI.
+* **Non-Functional Focus:** Thread safety, extensibility, testability.
+
+### Step 2: Domain Modeling Checklist
+1. **Nouns $\to$ Entities / Classes:** Identify primary domain actors and models.
+2. **Verbs $\to$ Behaviors / Methods:** Place business logic where state lives (Information Expert).
+3. **Relationships:**
+   - Inheritance (`is-a`): Use strictly for polymorphic behavior.
+   - Composition (`has-a`): Prefer over inheritance for flexibility.
+   - Dependency (`uses-a`): Method parameters and injected dependencies.
+4. **Value Objects & Enums:** Avoid primitive obsession; use enums for statuses and types.
+
+### Step 3: Pattern Selection Matrix
+
+| Scenario / Need | Design Pattern | Link to Pattern Deep Dive |
+| :--- | :--- | :--- |
+| Swappable algorithms / dynamic pricing / sorting policies | **Strategy** | [Strategy Pattern](/blog/design-patterns-behavioral#strategy-pattern) |
+| Event alerts, dashboard updates, listeners | **Observer** | [Observer Pattern](/blog/design-patterns-behavioral#observer-pattern) |
+| Multi-type object creation decoupled from clients | **Factory Method** | [Factory Method](/blog/design-patterns-creational#factory-method-pattern) |
+| Multi-level part-whole hierarchies (groups, trees) | **Composite** | [Composite Pattern](/blog/design-patterns-structural#composite-pattern) |
+| Dynamic add-ons, decorators, wrappers | **Decorator** | [Decorator Pattern](/blog/design-patterns-structural#wrapper-kinda-patterns-adapter-vs-facade-vs-decorator-vs-proxy) |
+| Complex state transitions without `switch` blocks | **State** | [State Pattern](/blog/design-patterns-behavioral#state-pattern) |
+| Auditable operations, undo/redo, task queues | **Command** | [Command Pattern](/blog/design-patterns-behavioral#command-pattern) |
+| Coordinating complex workflows across colleagues | **Mediator** | [Mediator Pattern](/blog/design-patterns-behavioral#mediator-pattern) |
+
+### Step 4: Concurrency & Defensive Coding Checklist
+- [ ] Critical state updates protected (`ReentrantLock`, `synchronized`, or atomic primitives).
+- [ ] Thread-safe collections used where needed (`ConcurrentHashMap`, `CopyOnWriteArrayList`).
+- [ ] Immutability enforced for identifiers and timestamps (`final` / `readonly`).
+- [ ] Validations with descriptive exceptions (`IllegalArgumentException`, `IllegalStateException`).
+
+### Step 5: Minimal Code Organization Structure
+```text
+src/
+├── model/       # Pure domain entities, value objects, enums
+├── strategy/    # Interfaces and swappable algorithm implementations
+├── repository/  # In-memory storage abstraction (Map-backed)
+├── service/     # Stateful coordinator / business logic service
+└── Main.java    # Driver demonstration covering all requirements & edge cases
+```
+
+---
+
+# 3. High-Level Design (HLD / System Design) Template
+
+Use this exact structure during system design interviews:
+
+```text
+1. Requirements & System Clarifications
+   ├── Functional Requirements
+   └── Non-Functional Requirements
+2. Capacity Estimations & Scale Profile
+3. API Design
+4. High-Level Analysis
+5. High-Level Architecture
+   ├── Core Solution
+   └── Infra Diagram
+6. Detailed Component Deep Dives
+7. Edge Cases & Operational Resilience
+8. Failure Modes & Mitigations
+9. Misc (Scaling, Security, Compliance, Telemetry)
+```
+
+---
+
+## 1. Requirements & System Clarifications
+
+### Functional Requirements (FR)
+* Define 3–4 explicit user actions/journeys.
+* Clarify data inputs and expected return formats.
+* Explicitly state what is **out of scope** (e.g. billing, user profile management).
+
+### Non-Functional Requirements (NFR)
+* **Availability vs. Consistency (CAP):** AP (high availability, eventual consistency) vs. CP (strong consistency).
+* **Latency SLAs:** p99 read $< 20\text{ms}$; p99 write $< 100\text{ms}$.
+* **Throughput Target:** Daily Active Users (DAU), peak traffic multiplier ($2\times$–$5\times$).
+* **Durability:** Zero data loss for committed writes (multi-zone replication).
+
+---
+
+## 2. Capacity Estimations & Scale Profile
+
+```text
+Math Shortcuts:
+• 1 Day ≈ 10^5 seconds (86,400)
+• 1M requests/day ≈ 10 requests/sec (QPS)
+• 100M requests/day ≈ 1,000 QPS
+• 80/20 Rule: 20% of content drives 80% of read traffic (cache sizing)
+```
+
+| Metric | Estimation Formula | Notes |
+| :--- | :--- | :--- |
+| **Write QPS** | $\frac{\text{DAU} \times \text{writes per user}}{10^5\text{ s}}$ | Peak = $2\times$ to $3\times$ Average |
+| **Read QPS** | $\text{Write QPS} \times \text{Read-to-Write Ratio}$ | E.g. $10:1$ or $100:1$ |
+| **Storage / Day** | $\text{Daily Writes} \times \text{Payload Size}$ | Multiply by $365 \times Y$ years $\times 1.3$ (indexes) |
+| **Cache Memory** | $\text{Daily Reads} \times 0.20 \times \text{Payload Size}$ | Sized for 20% hot working set |
+| **Network Bandwidth** | $\text{QPS} \times \text{Payload Size} \times 8$ | Separate into Ingress (writes) and Egress (reads) |
+
+---
+
+## 3. API Design
+
+Define explicit endpoint signatures, HTTP methods, headers, and payloads:
+
+```http
+POST /api/v1/{resource}
+Headers:
+  Authorization: Bearer <jwt>
+  Idempotency-Key: <uuid>
+Body: { "field": "value" }
+Response: 201 Created -> { "id": "...", "status": "PENDING" }
+
+GET /api/v1/{resource}/{id}
+Response: 200 OK -> { "id": "...", "data": "..." }
+
+GET /api/v1/{resource}?cursor=<token>&limit=20
+Response: 200 OK -> { "items": [...], "next_cursor": "<token>" }
+```
+
+* **HTTP Verbs:** `POST` (create), `GET` (read), `PUT`/`PATCH` (update), `DELETE`.
+* **Idempotency:** Include `Idempotency-Key` headers for write operations.
+* **Pagination:** Use keyset/cursor pagination over offset pagination for large tables.
+
+---
+
+## 4. High-Level Analysis
+
+Address core architectural trade-offs before diagramming:
+* **Communication Model:** Synchronous (HTTP/gRPC) vs. Asynchronous (Kafka / SQS / Event Bus).
+* **Delivery Guarantees:** At-least-once with idempotent consumers vs. Exactly-once.
+* **Database Choice:**
+  - *Relational (PostgreSQL/MySQL):* ACID transactions, complex joins, structured schemas.
+  - *NoSQL Key-Value/Document (DynamoDB, Cassandra):* Massive horizontal write scale, simple key lookups, zero joins.
+  - *Search/Time-Series (OpenSearch, ClickHouse):* Full-text queries, log analysis, time-series aggregations.
+
+---
+
+## 5. High-Level Architecture
+
+### Core Solution
+1. **Client** hits DNS $\to$ routed to closest Edge CDN/WAF.
+2. **API Gateway / L7 Load Balancer** handles SSL termination, auth, and rate limiting.
+3. **Stateless Services** process business logic, reading from/writing to cache and database.
+4. **Message Broker** decouples long-running or async downstream workloads.
+
+### Infra Diagram
+
+```text
+[ Client (Web/Mobile) ]
+          │ HTTPS (TLS 1.3)
+          ▼
+   [ DNS / Route 53 ]
+          │
+          ▼
+   [ CDN / WAF Edge ]
+          │
+          ▼
+[ Load Balancer / API Gateway ]
+          │
+   ┌──────┴──────────────────────────┐
+   │ (Stateless App Services)        │
+   │ [Service Pod]     [Service Pod] │
+   └──────┬──────────────────┬───────┘
+          │                  │
+    (Cache-Aside)            │ (Async Event)
+          ▼                  ▼
+  [ Redis Cluster ]    [ Message Queue (Kafka/SQS) ]
+          │                  │
+    (Fallback)               ▼
+          ▼            [ Async Consumer Workers ]
+[ Primary DB (Write) ]       │
+   │                         ▼
+   ├──► [ Read Replica ] ──► [ Search / Analytics Store ]
+   └──► [ Read Replica ]
+```
+
+---
+
+## 6. Detailed Component Deep Dives
+
+Pick the 2–3 biggest bottlenecks in the system:
+* **Unique ID Generation:** Snowflake ID (Timestamp + Node ID + Sequence) vs. UUIDv4 vs. DB Auto-increment with ticket servers.
+* **Partitioning / Sharding Strategy:** Hash-based partitioning via Consistent Hashing ring with virtual nodes to avoid hotspots.
+* **Read-After-Write Consistency:** Route immediate reads for recently written records to the primary database or local cache.
+* **Cache Strategy:** Cache-aside vs. Write-through; TTL policies; eviction policy (LRU / LFU).
+
+---
+
+## 7. Edge Cases & Operational Resilience
+
+* **Cache Stampede / Thundering Herd:** Use distributed locks (Redis Redlock) or probabilistic early expiration (XFetch).
+* **Hot Partition / Celebrity Problem:** Add local in-process cache (Caffeine) on app servers or salt partition keys (`key_prefix_randomInt`).
+* **Concurrent Writes & Race Conditions:** Optimistic Concurrency Control (OCC) using version numbers, or distributed pessimistic locks.
+* **Backpressure:** Bounded queues, client retry policies with exponential backoff and full jitter.
+
+---
+
+## 8. Failure Modes & Mitigations
+
+| Failure Mode | Impact | Mitigation Strategy |
+| :--- | :--- | :--- |
+| **Cache Node Down** | Spike in database read queries | Circuit breaker trips; serve stale data; fallback to in-memory app cache. |
+| **Primary Database Down** | Write operations fail | Automated failover via consensus (Raft/Paxos); promote read replica. |
+| **Message Queue Lag** | Delayed asynchronous processing | Auto-scale consumer group workers; provision disk-buffered topic partitions. |
+| **Network Partition (Split-Brain)** | Inconsistent writes across zones | Quorum-based writes ($W + R > N$); fence off minority partitions. |
+| **Downstream Service Outage** | Cascading thread starvation | Circuit breakers (Resilience4j) with fallback responses; bounded thread pools. |
+
+---
+
+## 9. Misc
+
+### Scaling
+* **Stateless Tier:** Horizontal Pod Autoscaler (HPA) driven by CPU/Memory or queue depth.
+* **Database Tier:** Read replicas for read scaling; sharding on entity ID for write scaling.
+
+### Security
+* **Auth:** OAuth 2.0 / OpenID Connect with short-lived JWTs.
+* **Encryption:** TLS 1.3 in transit; AES-256 at rest (AWS KMS).
+* **Perimeter:** WAF rate limiting (Token Bucket) per IP and API key; DDoS protection.
+
+### Compliance
+* **GDPR / CCPA:** Soft-delete flags with automated background purges; anonymize PII; data export pipelines.
+* **Audit Trails:** Immutable, append-only logs for all sensitive administrative actions.
+
+### Telemetry (Observability)
+* **Metrics:**
+  - **RED Method (Services):** Rate (QPS), Errors (4xx/5xx), Duration (p50/p95/p99 latency).
+  - **USE Method (Infra):** Utilization, Saturation, Errors (CPU, memory, disk, network).
+* **Tracing:** OpenTelemetry distributed tracing headers (`traceparent`) across microservices.
+* **Logs:** Centralized JSON structured logs (Elasticsearch / OpenSearch).
+* **Alerts:** PagerDuty triggers on SLA breaches (e.g. $p99 > 100\text{ms}$ or error rate $> 1\%$).
